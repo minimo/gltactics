@@ -16,6 +16,9 @@ SC_H_C = SC_H*0.5;
 //インスタンス
 var app;
 
+//ショートハンド
+var glb = GLBoost;
+
 window.onload = function() {
     app = tac.Application();
     app.run();

@@ -62,7 +62,7 @@ phina.define("tac.MainScene", {
             .addChildTo(this)
             .setPosition(SC_W*0.5, SC_H*0.5);
         this.mask.tweener.setUpdateType('fps');
-        this.mask.tweener.clear().fadeOut(20);
+        this.mask.tweener.clear().fadeOut(10);
 
     },
     
@@ -70,6 +70,7 @@ phina.define("tac.MainScene", {
         var rotateMatrix = GLBoost.Matrix33.rotateY(-1.0);
         var rotatedVector = rotateMatrix.multiplyVector(this.camera.eye);
         this.camera.eye = rotatedVector;
+        this.layer.x--;
         this.time++;
     },
 
@@ -89,24 +90,23 @@ phina.define("tac.MainScene", {
 
         var cubeGeometry = new GLBoost.Cube(new GLBoost.Vector3(1,1,1), new GLBoost.Vector4(1,1,1,1));
         var cube = new GLBoost.Mesh(cubeGeometry, material);
-        cube.translate = new GLBoost.Vector3(0,2,0);
+        cube.translate = new GLBoost.Vector3(0, 2, 0);
         layer.scene.add(cube);
 
-        this.camera = new GLBoost.Camera(
-            {
-              eye: new GLBoost.Vector3(0.0, 5, 15.0),
-              center: new GLBoost.Vector3(0.0, 5.0, 0.0),
-              up: new GLBoost.Vector3(0.0, 1.0, 0.0)
-            },{
-              fovy: 45.0,
-              aspect: SC_W/SC_H,
-              zNear: 0.1,
-              zFar: 300.0
-            }
-        );
+        this.camera = new GLBoost.Camera({
+            eye: new GLBoost.Vector3(0.0, 5, 15.0),
+            center: new GLBoost.Vector3(0.0, 5.0, 0.0),
+            up: new GLBoost.Vector3(0.0, 1.0, 0.0)
+        },{
+            fovy: 45.0,
+            aspect: SC_W/SC_H,
+            zNear: 0.1,
+            zFar: 300.0
+        });
         layer.scene.add(this.camera);
 
         layer.scene.prepareForRender();
+        this.layer = layer;
     },
 
     //タッチorクリック開始処理
