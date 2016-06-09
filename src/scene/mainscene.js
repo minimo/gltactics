@@ -35,7 +35,7 @@ phina.define("tac.MainScene", {
     },
 
     init: function(option) {
-        this.superInit();
+        this.superInit({width: SC_W, height: SC_H});
         this.$extend(this._member);
 
         option = (option || {}).$safe({stageId: 1});
@@ -55,7 +55,8 @@ phina.define("tac.MainScene", {
         this.bg.tweener.setUpdateType('fps');
 
         //３Ｄセットアップ
-        this.setup3D();
+        this.layer = this.setup3D(SC_W*0.9, SC_H*0.9);
+        this.layer.setOrigin(0.5, 0.5).setPosition(SC_W*0.5, SC_H*0.5);
 
         //目隠し
         this.mask = phina.display.RectangleShape(param)
@@ -70,28 +71,37 @@ phina.define("tac.MainScene", {
         var rotateMatrix = GLBoost.Matrix33.rotateY(-1.0);
         var rotatedVector = rotateMatrix.multiplyVector(this.camera.eye);
         this.camera.eye = rotatedVector;
-        this.layer.x--;
         this.time++;
     },
 
     //３Ｄセットアップ
-    setup3D: function() {
+    setup3D: function(width, height) {
         var layer = phina.display.GLBoostLayer({
-            width: SC_W,
-            height: SC_H
+            width: width,
+            height: height
         }).addChildTo(this);
+
         var material = new GLBoost.ClassicMaterial(layer.canvas);
         var texture = new GLBoost.Texture('assets/texture.png');
         material.diffuseTexture = texture;
 
         var planeGeometry = new GLBoost.Plane(10, 10, 10, 10, null);
         var plane = new GLBoost.Mesh(planeGeometry, material);
+        plane.translate = new GLBoost.Vector3(0, 2, 0);
         layer.scene.add(plane);
 
         var cubeGeometry = new GLBoost.Cube(new GLBoost.Vector3(1,1,1), new GLBoost.Vector4(1,1,1,1));
         var cube = new GLBoost.Mesh(cubeGeometry, material);
-        cube.translate = new GLBoost.Vector3(0, 2, 0);
+        cube.translate = new GLBoost.Vector3(0, 3, 0);
         layer.scene.add(cube);
+
+        var parser = new vox.Parser();
+        var p = parser.parse("assets/chr_fox.vox");
+        var a = p.then(function(voxelData) {
+            var builder = new vox.GLBoostMeshBuilder(voxelData);
+            var mesh = builder.createMesh();
+            layer.scene.add(mesh);
+        });
 
         this.camera = new GLBoost.Camera({
             eye: new GLBoost.Vector3(0.0, 5, 15.0),
@@ -99,14 +109,14 @@ phina.define("tac.MainScene", {
             up: new GLBoost.Vector3(0.0, 1.0, 0.0)
         },{
             fovy: 45.0,
-            aspect: SC_W/SC_H,
+            aspect: width/height,
             zNear: 0.1,
             zFar: 300.0
         });
         layer.scene.add(this.camera);
 
         layer.scene.prepareForRender();
-        this.layer = layer;
+        return layer;
     },
 
     //タッチorクリック開始処理
