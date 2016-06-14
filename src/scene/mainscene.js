@@ -55,7 +55,7 @@ phina.define("tac.MainScene", {
         this.bg.tweener.setUpdateType('fps');
 
         //３Ｄセットアップ
-        this.layer = this.setup3D(SC_W*0.9, SC_H*0.9);
+        this.layer = this.setup3D(SC_W, SC_H);
         this.layer.setOrigin(0.5, 0.5).setPosition(SC_W*0.5, SC_H*0.5);
 
         //目隠し
@@ -64,10 +64,19 @@ phina.define("tac.MainScene", {
             .setPosition(SC_W*0.5, SC_H*0.5);
         this.mask.tweener.setUpdateType('fps');
         this.mask.tweener.clear().fadeOut(10);
-
     },
     
     update: function(app) {
+        var kb = app.keyboard;
+        if (kb.getKey("up")) {
+            var t = this.cube.translate;
+            this.cube.translate = new GLBoost.Vector3(t.x, t.y, t.z+0.5);
+        }
+        if (kb.getKey("down")) {
+            var t = this.cube.translate;
+            this.cube.translate = new GLBoost.Vector3(t.x, t.y, t.z-0.5);
+        }
+
         var rotateMatrix = GLBoost.Matrix33.rotateY(-1.0);
         var rotatedVector = rotateMatrix.multiplyVector(this.camera.eye);
         this.camera.eye = rotatedVector;
@@ -94,6 +103,7 @@ phina.define("tac.MainScene", {
         var cube = new GLBoost.Mesh(cubeGeometry, material);
         cube.translate = new GLBoost.Vector3(0, 3, 0);
         layer.scene.add(cube);
+        this.cube = cube;
 
         var parser = new vox.Parser();
         var p = parser.parse("assets/chr_fox.vox");
