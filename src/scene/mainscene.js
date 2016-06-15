@@ -105,6 +105,9 @@ phina.define("tac.MainScene", {
         layer.scene.add(cube);
         this.cube = cube;
 
+        var mqo = phina.asset.AssetManager.get("mqo", "gradriel");
+        var mesh = mqo.getMesh();
+
         var parser = new vox.Parser();
         var p = parser.parse("assets/chr_fox.vox");
         var a = p.then(function(voxelData) {

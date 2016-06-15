@@ -1,3 +1,6 @@
+var THREE = THREE || false;
+var GLBoost = GLBoost || false;
+
 phina.namespace(function() {
 
     var _modelPath = "";
@@ -35,6 +38,13 @@ phina.namespace(function() {
             return this.model.convert(canvas);
         }
     });
+
+    //アセットローダー追加
+    phina.asset.AssetLoader.assetLoadFunctions['mqo'] = function(key, path) {
+        var mqo = phina.asset.MQO();
+        var flow = mqo.load(path);
+        return flow;
+    }
 
     /*
      * メタセコイアモデル
@@ -156,8 +166,11 @@ phina.namespace(function() {
 
             //使用マテリアルに応じてオブジェクトを分割変換
             this.build = null;
-            if (THREE) this.build = this.buildTHREE;
-//            if (GLBoost !== undefined) this.build = this.buildGLB;
+            if (THREE) {
+                this.build = this.buildTHREE;
+            } else if (GLBoost) {
+                this.build = this.buildGLB;
+            }
 
             var meshList = []
             for (var mn = 0; mn < facemat.length; mn++) {
@@ -381,10 +394,10 @@ phina.namespace(function() {
                 if (mat.ambient) mat.ambientColor = new Vector3(r*mqoMat.amb, g*mqoMat.amb, b*mqoMat.amb);
                 if (mat.specular) mat.specularColor = new Vector3(r*mqoMat.spc, g*mqoMat.spc, b*mqoMat.spc);
                 if (mqoMat.tex) {
-//                    mat.map = THREE.ImageUtils.loadTexture(_modelPath+"/"+mqoMat.tex);
+                      mat.map = new GLBoost.Texture(_modelPath+"/"+mqoMat.tex);
                 }
                 if (mqoMat.aplane) {
-//                    mat.alphaMap = THREE.ImageUtils.loadTexture(_modelPath+"/"+mqoMat.aplane);
+                      mat.alphaMap = new GLBoost.Texture(_modelPath+"/"+mqoMat.aplane);
                 }
             } else {
                 //デフォルトマテリアル

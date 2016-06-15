@@ -18,9 +18,12 @@ phina.define("tac.Application", {
                 font: {
                     "UbuntuMono":   "fonts/UbuntuMono-Bold.ttf",
                     "Orbitron":     "fonts/Orbitron-Regular.ttf",
-                }
+                },
             },
             "common": {
+                mqo: {
+                    "gradriel":     "assets/gradriel_pose.mqo",
+                },
             },
         },
     },
@@ -49,7 +52,7 @@ phina.define("tac.Application", {
         //ＢＧＭ＆ＳＥ
         this.soundset = phina.extension.SoundSet();
 
-        this.replaceScene(tac.MainScene());
+        this.replaceScene(tac.SceneFlow());
     },
 
     _onLoadAssets: function() {

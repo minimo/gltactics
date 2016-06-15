@@ -36,7 +36,7 @@ phina.define("tac.LoadingScene", {
         //ロードする物が無い場合スキップ
         this.forceExit = false;
         var asset = options.asset;
-        if (!asset.$has("sound") && !asset.$has("image") && !asset.$has("font") && !asset.$has("spritesheet") && !asset.$has("script")) {
+        if (!asset.$has("sound") && !asset.$has("image") && !asset.$has("font") && !asset.$has("spritesheet") && !asset.$has("script") && !asset.$has("mqo")) {
             this.forceExit = true;
             return;
         }

@@ -65,7 +65,7 @@ phina.namespace(function() {
         },
 
         _static: {
-            logo: "assets/images/logo.png",
+            logo: "assets/logo.png",
         },
     });
 });
