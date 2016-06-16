@@ -106,8 +106,9 @@ phina.define("tac.MainScene", {
         this.cube = cube;
 
         var mqo = phina.asset.AssetManager.get("mqo", "gradriel");
-        var mesh = mqo.getMesh();
-
+        var mesh = mqo.buildMesh();
+//        layer.scene.add(mesh);
+/*
         var parser = new vox.Parser();
         var p = parser.parse("assets/chr_fox.vox");
         var a = p.then(function(voxelData) {
@@ -115,7 +116,7 @@ phina.define("tac.MainScene", {
             var mesh = builder.createMesh();
             layer.scene.add(mesh);
         });
-
+*/
         this.camera = new GLBoost.Camera({
             eye: new GLBoost.Vector3(0.0, 5, 15.0),
             center: new GLBoost.Vector3(0.0, 5.0, 0.0),

@@ -1,9 +1,4 @@
-var THREE = THREE || false;
-var GLBoost = GLBoost || false;
-
 phina.namespace(function() {
-
-    var _modelPath = "";
 
     phina.define("phina.asset.MQO", {
         superClass: "phina.asset.Asset",
@@ -27,16 +22,15 @@ phina.namespace(function() {
             req.open("GET", this.src, true);
             req.onload = function() {
                 var data = req.responseText;
-                that.model = phina.MQOModel(data);
+                that.model = phina.MQOModel(data, that.modelPath);
                 resolve(that);
             };
             req.send(null);
         },
 
-        getMesh: function(canvas) {
-            _modelPath = this.modelPath;
-            return this.model.convert(canvas);
-        }
+        buildMesh: function(canvas) {
+            return this.model.build(canvas);
+        },
     });
 
     //アセットローダー追加
@@ -58,8 +52,12 @@ phina.namespace(function() {
 
         //マテリアルアレイ
         _rawMaterials: null,
+
+        //モデルが存在するパス
+        path: "",
         
-        init: function(data) {
+        init: function(data, path) {
+            this.path = path || "";
             this.meshes = [];
             this._rawMeshes = [];
             this._rawMaterials = null;
@@ -74,12 +72,12 @@ phina.namespace(function() {
             // オブジェクト
             var objectText = data.match(/^Object [\s\S]*?^\}/gm);
             for (var i = 0, len = objectText.length; i < len; ++i) {
-                var mesh = phina.MQOMesh(objectText[i]);
+                var mesh = phina.MQOMesh(objectText[i], this.path);
                 this._rawMeshes.push(mesh);
             }
         },
 
-        convert: function(canvas){
+        build: function(canvas){
             this.meshes = [];
             for (var i = 0, len = this._rawMeshes.length; i < len; i++) {
                 var mesh = this._rawMeshes[i];
@@ -96,7 +94,11 @@ phina.namespace(function() {
      * メタセコイアメッシュ
      */
     phina.define("phina.MQOMesh", {
-        name: "",   //メッシュ名
+        //モデルが存在するパス
+        path: "",
+
+        //メッシュ名
+        name: "",
 
         vertices: [],   // 頂点
         faces: [],      // 面情報
@@ -107,7 +109,8 @@ phina.namespace(function() {
         mirror: 0,      //ミラーリング
         mirrorAxis: 0,  //ミラーリング軸
 
-        init: function(text) {
+        init: function(text, path) {
+            this.path = path || "";
             this.vertices = [];
             this.faces = [];
             this.vertNormals = [];
@@ -166,12 +169,14 @@ phina.namespace(function() {
 
             //使用マテリアルに応じてオブジェクトを分割変換
             this.build = null;
+             this.build = this.buildGLB;
+/*
             if (THREE) {
                 this.build = this.buildTHREE;
             } else if (GLBoost) {
                 this.build = this.buildGLB;
             }
-
+*/
             var meshList = []
             for (var mn = 0; mn < facemat.length; mn++) {
                 var matnum = facemat[mn];
@@ -208,10 +213,10 @@ phina.namespace(function() {
                 if (mat.ambient) mat.ambient.setRGB(r*mqoMat.amb, g*mqoMat.amb, b*mqoMat.amb);
                 if (mat.specular) mat.specular.setRGB(r*mqoMat.spc, g*mqoMat.spc, b*mqoMat.spc);
                 if (mqoMat.tex) {
-                    mat.map = THREE.ImageUtils.loadTexture(_modelPath+"/"+mqoMat.tex);
+                    mat.map = THREE.ImageUtils.loadTexture(this.path+"/"+mqoMat.tex);
                 }
                 if (mqoMat.aplane) {
-                    mat.alphaMap = THREE.ImageUtils.loadTexture(_modelPath+"/"+mqoMat.aplane);
+                    mat.alphaMap = THREE.ImageUtils.loadTexture(this.path+"/"+mqoMat.aplane);
                 }
                 mat.transparent = true;
                 mat.shiness = mqoMat.power;
@@ -394,10 +399,10 @@ phina.namespace(function() {
                 if (mat.ambient) mat.ambientColor = new Vector3(r*mqoMat.amb, g*mqoMat.amb, b*mqoMat.amb);
                 if (mat.specular) mat.specularColor = new Vector3(r*mqoMat.spc, g*mqoMat.spc, b*mqoMat.spc);
                 if (mqoMat.tex) {
-                      mat.map = new GLBoost.Texture(_modelPath+"/"+mqoMat.tex);
+                      mat.diffuseTexture = new GLBoost.Texture(this.path+"/"+mqoMat.tex);
                 }
                 if (mqoMat.aplane) {
-                      mat.alphaMap = new GLBoost.Texture(_modelPath+"/"+mqoMat.aplane);
+                      mat.alphaMap = new GLBoost.Texture(this.path+"/"+mqoMat.aplane);
                 }
             } else {
                 //デフォルトマテリアル
@@ -409,13 +414,17 @@ phina.namespace(function() {
             //ジオメトリ情報
             var geo = new GLBoost.Geometry(canvas);
 
-            //頂点情報初期化
+            //頂点情報
+            var positions = [];
             for(var i = 0; i < this.vertices.length; i++) {
-                this.vertices[i].to = -1;
+                positions.push(new GLBoost.Vector3(this.vertices.x, this.vertices.y, this.vertices.z));
             }
-            var countVertex = 0;
 
             //インデックス情報
+            var indices = [];
+            var normals = [];
+            var colors = [];
+            var texcoords = [];
             for (var i = 0, len = this.faces.length; i < len; i++) {
                 var face = this.faces[i];
                 if (face.m != num) continue;
@@ -423,135 +432,64 @@ phina.namespace(function() {
 
                 var vIndex = face.v;
                 if (face.vNum == 3) {
-                    //法線
-                    var nx = face.n[0];
-                    var ny = face.n[1];
-                    var nz = face.n[2];
-                    var normal =  new GLBoost.Vector3(nx, ny, nz);
+                    //インデックス情報
+                    indices.push(vIndex[2]);
+                    indices.push(vIndex[1]);
+                    indices.push(vIndex[0]);
 
-                    //フェース情報
-                    var index = [];
-                    index[0] = vIndex[2];
-                    index[1] = vIndex[1];
-                    index[2] = vIndex[0];
-                    for (var j = 0; j < 3; j++) {
-                        var v = this.vertices[index[j]];
-                        if (v.to != -1) {
-                            index[j] = v.to;
-                        } else {
-                            v.to = countVertex;
-                            index[j] = v.to;
-                            countVertex++;
-                        }
-                    }
-                    var face3 = new GLBoost.Face3(index[0], index[1], index[2], normal, undefined, face.m[0]);
-
-                    //頂点法線
-                    face3.vertexNormals.push(normal);
-                    face3.vertexNormals.push(normal);
-                    face3.vertexNormals.push(normal);
-
-                    geo.faces.push(face3);
+                    //頂点法線（絶賛手抜き中）
+                    normals.push(new GLBoost.Vector3(face.n[0], face.n[1], face.n[2]));
+                    normals.push(new GLBoost.Vector3(face.n[0], face.n[1], face.n[2]));
+                    normals.push(new GLBoost.Vector3(face.n[0], face.n[1], face.n[2]));
 
                     // ＵＶ座標
-                    geo.faceVertexUvs[0].push([
-                        new GLBoost.Vector2(face.uv[4], 1.0 - face.uv[5]),
-                        new GLBoost.Vector2(face.uv[2], 1.0 - face.uv[3]),
-                        new GLBoost.Vector2(face.uv[0], 1.0 - face.uv[1])]);
+                    texcoords.push(new GLBoost.Vector2(face.uv[4], 1.0 - face.uv[5]));
+                    texcoords.push(new GLBoost.Vector2(face.uv[2], 1.0 - face.uv[3]));
+                    texcoords.push(new GLBoost.Vector2(face.uv[0], 1.0 - face.uv[1]));
+                    
                 } else if (face.vNum == 4) {
-                    //法線
-                    var nx = face.n[0];
-                    var ny = face.n[1];
-                    var nz = face.n[2];
-                    var normal =  new GLBoost.Vector3(nx, ny, nz);
-
                     //四角を三角に分割
                     {
-                        //フェース情報
-                        var index = [];
-                        index[0] = vIndex[3];
-                        index[1] = vIndex[2];
-                        index[2] = vIndex[1];
-                        for (var j = 0; j < 3; j++) {
-                            var v = this.vertices[index[j]];
-                            if (v.to != -1) {
-                                index[j] = v.to;
-                            } else {
-                                v.to = countVertex;
-                                index[j] = v.to;
-                                countVertex++;
-                            }
-                        }
-                        var face3 = new GLBoost.Face3(index[0], index[1], index[2], normal, undefined, face.m[0]);
-//                        var face3 = new THREE.Face3(vIndex[3], vIndex[2], vIndex[1], normal, undefined, face.m[0]);
+                        //インデックス情報
+                        indices.push(vIndex[3]);
+                        indices.push(vIndex[2]);
+                        indices.push(vIndex[1]);
 
-                        //頂点法線
-                        face3.vertexNormals.push(normal);
-                        face3.vertexNormals.push(normal);
-                        face3.vertexNormals.push(normal);
-
-                        geo.faces.push(face3);
+                        //頂点法線（絶賛手抜き中）
+                        normals.push(new GLBoost.Vector3(face.n[0], face.n[1], face.n[2]));
+                        normals.push(new GLBoost.Vector3(face.n[0], face.n[1], face.n[2]));
+                        normals.push(new GLBoost.Vector3(face.n[0], face.n[1], face.n[2]));
 
                         // ＵＶ座標
-                        geo.faceVertexUvs[0].push([
-                            new GLBoost.Vector2(face.uv[6], 1.0 - face.uv[7]),
-                            new GLBoost.Vector2(face.uv[4], 1.0 - face.uv[5]),
-                            new GLBoost.Vector2(face.uv[2], 1.0 - face.uv[3])]);
+                        texcoords.push(new GLBoost.Vector2(face.uv[6], 1.0 - face.uv[7]));
+                        texcoords.push(new GLBoost.Vector2(face.uv[4], 1.0 - face.uv[5]));
+                        texcoords.push(new GLBoost.Vector2(face.uv[2], 1.0 - face.uv[3]));
                     }
                     {
-                        //フェース情報
-                        var index = [];
-                        index[0] = vIndex[1];
-                        index[1] = vIndex[0];
-                        index[2] = vIndex[3];
-                        for (var j = 0; j < 3; j++) {
-                            var v = this.vertices[index[j]];
-                            if (v.to != -1) {
-                                index[j] = v.to;
-                            } else {
-                                v.to = countVertex;
-                                index[j] = v.to;
-                                countVertex++;
-                            }
-                        }
-                        var face3 = new THREE.Face3(index[0], index[1], index[2], normal, undefined, face.m[0]);
-//                        var face3 = new THREE.Face3(vIndex[1], vIndex[0], vIndex[3], normal, undefined, face.m[0]);
+                        //インデックス情報
+                        indices.push(vIndex[1]);
+                        indices.push(vIndex[0]);
+                        indices.push(vIndex[3]);
 
-                        //頂点法線
-                        face3.vertexNormals.push(normal);
-                        face3.vertexNormals.push(normal);
-                        face3.vertexNormals.push(normal);
-
-                        geo.faces.push(face3);
+                        //頂点法線（絶賛手抜き中）
+                        normals.push(new GLBoost.Vector3(face.n[0], face.n[1], face.n[2]));
+                        normals.push(new GLBoost.Vector3(face.n[0], face.n[1], face.n[2]));
+                        normals.push(new GLBoost.Vector3(face.n[0], face.n[1], face.n[2]));
 
                         // ＵＶ座標
-                        geo.faceVertexUvs[0].push([
-                            new GLBoost.Vector2(face.uv[2], 1.0 - face.uv[3]),
-                            new GLBoost.Vector2(face.uv[0], 1.0 - face.uv[1]),
-                            new GLBoost.Vector2(face.uv[6], 1.0 - face.uv[7])]);
+                        texcoords.push(new GLBoost.Vector2(face.uv[2], 1.0 - face.uv[3]));
+                        texcoords.push(new GLBoost.Vector2(face.uv[0], 1.0 - face.uv[1]));
+                        texcoords.push(new GLBoost.Vector2(face.uv[6], 1.0 - face.uv[7]));
                     }
                 }
             }
 
-            //頂点情報
-            var scale = 1;
-            this.vertices.sort(function(a, b) {
-                return a.to - b.to;
-            });
-            for(var i = 0; i < this.vertices.length; i++) {
-                var v = this.vertices[i];
-                if (v.to != -1) {
-                    var x = v.x*scale;
-                    var y = v.y*scale;
-                    var z = v.z*scale;
-                    geo.vertices.push(new THREE.Vector3(x, y, z));
-                }
-            }
-
-            //各種情報計算
-            geo.computeBoundingBox();
-            geo.computeFaceNormals();
-            geo.computeVertexNormals();
+            geo.setVerticesData({
+                position: positions,
+                color: colors,
+                normal: normals,
+                texcoord: texcoords
+            }, indices);
 
             //メッシュ生成
             var obj = new GLBoost.Mesh(geo, mat);
