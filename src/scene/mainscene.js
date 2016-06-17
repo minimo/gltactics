@@ -99,24 +99,32 @@ phina.define("tac.MainScene", {
         plane.translate = new GLBoost.Vector3(0, 2, 0);
         layer.scene.add(plane);
 
+        var material2 = new GLBoost.ClassicMaterial(layer.canvas);
+        var texture2 = new GLBoost.Texture('assets/logo.png');
+        material2.diffuseTexture = texture2;
+
         var cubeGeometry = new GLBoost.Cube(new GLBoost.Vector3(1,1,1), new GLBoost.Vector4(1,1,1,1));
-        var cube = new GLBoost.Mesh(cubeGeometry, material);
+        var cube = new GLBoost.Mesh(cubeGeometry, material2);
         cube.translate = new GLBoost.Vector3(0, 3, 0);
-        layer.scene.add(cube);
+//        layer.scene.add(cube);
         this.cube = cube;
 
         var mqo = phina.asset.AssetManager.get("mqo", "gradriel");
         var mesh = mqo.buildMesh();
-//        layer.scene.add(mesh);
-/*
+        mesh[0].translate = new GLBoost.Vector3(0, 3, 0);
+        layer.scene.add(mesh[0]);
+
         var parser = new vox.Parser();
         var p = parser.parse("assets/chr_fox.vox");
         var a = p.then(function(voxelData) {
+            var d = voxelData;
+/*
             var builder = new vox.GLBoostMeshBuilder(voxelData);
             var mesh = builder.createMesh();
             layer.scene.add(mesh);
-        });
 */
+        });
+
         this.camera = new GLBoost.Camera({
             eye: new GLBoost.Vector3(0.0, 5, 15.0),
             center: new GLBoost.Vector3(0.0, 5.0, 0.0),
