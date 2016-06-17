@@ -417,7 +417,8 @@ phina.namespace(function() {
             //頂点情報
             var positions = [];
             for(var i = 0; i < this.vertices.length; i++) {
-                positions.push(new GLBoost.Vector3(this.vertices.x, this.vertices.y, this.vertices.z));
+                var v = new GLBoost.Vector3(this.vertices[i].x, this.vertices[i].y, this.vertices[i].z);
+                positions.push(v);
             }
 
             //インデックス情報
@@ -447,6 +448,10 @@ phina.namespace(function() {
                     texcoords.push(new GLBoost.Vector2(face.uv[2], 1.0 - face.uv[3]));
                     texcoords.push(new GLBoost.Vector2(face.uv[0], 1.0 - face.uv[1]));
                     
+                    //頂点色（暫定）
+                    colors.push(new GLBoost.Vector4(1.0, 1.0, 1.0, 1.0));
+                    colors.push(new GLBoost.Vector4(1.0, 1.0, 1.0, 1.0));
+                    colors.push(new GLBoost.Vector4(1.0, 1.0, 1.0, 1.0));
                 } else if (face.vNum == 4) {
                     //四角を三角に分割
                     {
@@ -464,6 +469,11 @@ phina.namespace(function() {
                         texcoords.push(new GLBoost.Vector2(face.uv[6], 1.0 - face.uv[7]));
                         texcoords.push(new GLBoost.Vector2(face.uv[4], 1.0 - face.uv[5]));
                         texcoords.push(new GLBoost.Vector2(face.uv[2], 1.0 - face.uv[3]));
+
+                        //頂点色（暫定）
+                        colors.push(new GLBoost.Vector4(1.0, 1.0, 1.0, 1.0));
+                        colors.push(new GLBoost.Vector4(1.0, 1.0, 1.0, 1.0));
+                        colors.push(new GLBoost.Vector4(1.0, 1.0, 1.0, 1.0));
                     }
                     {
                         //インデックス情報
@@ -480,6 +490,11 @@ phina.namespace(function() {
                         texcoords.push(new GLBoost.Vector2(face.uv[2], 1.0 - face.uv[3]));
                         texcoords.push(new GLBoost.Vector2(face.uv[0], 1.0 - face.uv[1]));
                         texcoords.push(new GLBoost.Vector2(face.uv[6], 1.0 - face.uv[7]));
+
+                        //頂点色（暫定）
+                        colors.push(new GLBoost.Vector4(1.0, 1.0, 1.0, 1.0));
+                        colors.push(new GLBoost.Vector4(1.0, 1.0, 1.0, 1.0));
+                        colors.push(new GLBoost.Vector4(1.0, 1.0, 1.0, 1.0));
                     }
                 }
             }
