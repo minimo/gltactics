@@ -115,6 +115,12 @@ phina.define("tac.MainScene", {
         m.translate = new GLBoost.Vector3(0, 0, 0);
         layer.scene.add(m);
 
+        var mqo = phina.asset.AssetManager.get("mqo", "ground");
+        var meshes = mqo.buildMesh();
+        var m = meshes[0];
+        m.translate = new GLBoost.Vector3(0, -5, 0);
+        layer.scene.add(m);
+
         var parser = new vox.Parser();
         var p = parser.parse("assets/chr_fox.vox");
         var a = p.then(function(voxelData) {
@@ -127,7 +133,7 @@ phina.define("tac.MainScene", {
         });
 
         this.camera = new GLBoost.Camera({
-            eye: new GLBoost.Vector3(0.0, 5, 40.0),
+            eye: new GLBoost.Vector3(0.0, 15, 40.0),
             center: new GLBoost.Vector3(0.0, 5.0, 0.0),
             up: new GLBoost.Vector3(0.0, 1.0, 0.0)
         },{

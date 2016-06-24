@@ -23,6 +23,7 @@ phina.define("tac.Application", {
             "common": {
                 mqo: {
                     "gradriel":     "assets/gradriel_pose.mqo",
+                    "ground":       "assets/ground.mqo",
                 },
             },
         },
