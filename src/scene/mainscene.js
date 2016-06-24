@@ -96,7 +96,7 @@ phina.define("tac.MainScene", {
 
         var planeGeometry = new GLBoost.Plane(10, 10, 10, 10, null);
         var plane = new GLBoost.Mesh(planeGeometry, material);
-        plane.translate = new GLBoost.Vector3(0, 2, 0);
+        plane.translate = new GLBoost.Vector3(0, 0, 0);
         layer.scene.add(plane);
 
         var material2 = new GLBoost.ClassicMaterial(layer.canvas);
@@ -110,9 +110,10 @@ phina.define("tac.MainScene", {
         this.cube = cube;
 
         var mqo = phina.asset.AssetManager.get("mqo", "gradriel");
-        var mesh = mqo.buildMesh();
-        mesh[0].translate = new GLBoost.Vector3(0, 3, 0);
-        layer.scene.add(mesh[0]);
+        var meshes = mqo.buildMesh();
+        var m = meshes[0];
+        m.translate = new GLBoost.Vector3(0, 0, 0);
+        layer.scene.add(m);
 
         var parser = new vox.Parser();
         var p = parser.parse("assets/chr_fox.vox");
@@ -126,7 +127,7 @@ phina.define("tac.MainScene", {
         });
 
         this.camera = new GLBoost.Camera({
-            eye: new GLBoost.Vector3(0.0, 5, 15.0),
+            eye: new GLBoost.Vector3(0.0, 5, 40.0),
             center: new GLBoost.Vector3(0.0, 5.0, 0.0),
             up: new GLBoost.Vector3(0.0, 1.0, 0.0)
         },{
