@@ -97,7 +97,7 @@ phina.define("tac.MainScene", {
         var planeGeometry = new GLBoost.Plane(10, 10, 10, 10, null);
         var plane = new GLBoost.Mesh(planeGeometry, material);
         plane.translate = new GLBoost.Vector3(0, 0, 0);
-        layer.scene.add(plane);
+        layer.scene.addChild(plane);
 
         var material2 = new GLBoost.ClassicMaterial(layer.canvas);
         var texture2 = new GLBoost.Texture('assets/logo.png');
@@ -113,13 +113,13 @@ phina.define("tac.MainScene", {
         var meshes = mqo.buildMesh();
         var m = meshes[0];
         m.translate = new GLBoost.Vector3(0, 0, 0);
-        layer.scene.add(m);
+        layer.scene.addChild(m);
 
         var mqo = phina.asset.AssetManager.get("mqo", "ground");
         var meshes = mqo.buildMesh();
         var m = meshes[0];
         m.translate = new GLBoost.Vector3(0, -5, 0);
-        layer.scene.add(m);
+        layer.scene.addChild(m);
 
         var parser = new vox.Parser();
         var p = parser.parse("assets/chr_fox.vox");
@@ -128,7 +128,7 @@ phina.define("tac.MainScene", {
 /*
             var builder = new vox.GLBoostMeshBuilder(voxelData);
             var mesh = builder.createMesh();
-            layer.scene.add(mesh);
+            layer.scene.addChild(mesh);
 */
         });
 
@@ -142,7 +142,7 @@ phina.define("tac.MainScene", {
             zNear: 0.1,
             zFar: 300.0
         });
-        layer.scene.add(this.camera);
+        layer.scene.addChild(this.camera);
 
         layer.scene.prepareForRender();
         return layer;
