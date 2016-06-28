@@ -1,5 +1,3 @@
-var mqo = {};
-
 (function() {
 
     mqo.MeshBuilder = function() {
