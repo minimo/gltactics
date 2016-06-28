@@ -77,9 +77,11 @@ phina.define("tac.MainScene", {
             this.cube.translate = new GLBoost.Vector3(t.x, t.y, t.z-0.5);
         }
 
-        var rotateMatrix = GLBoost.Matrix33.rotateY(-1.0);
-        var rotatedVector = rotateMatrix.multiplyVector(this.camera.eye);
-        this.camera.eye = rotatedVector;
+        if (!app.mouse.getPointing()) {
+            var rotateMatrix = new GLBoost.Matrix33.rotateY(-1);
+            var rotatedVector = rotateMatrix.multiplyVector(this.camera.eye);
+            this.camera.eye = rotatedVector;
+        }
         this.time++;
     },
 
@@ -119,6 +121,7 @@ phina.define("tac.MainScene", {
         var meshes = mqo.buildMesh();
         var m = meshes[0];
         m.translate = new GLBoost.Vector3(0, -5, 0);
+        m.scale = new GLBoost.Vector3(5.0, 1.5, 5.0);
         layer.scene.addChild(m);
 
         var parser = new vox.Parser();
@@ -154,6 +157,13 @@ phina.define("tac.MainScene", {
 
     //タッチorクリック移動処理
     onpointmove: function(e) {
+        var x = e.pointer.deltaPosition.x*0.5;
+        var y = e.pointer.deltaPosition.y*0.5;
+        var rotateMatrixX = new GLBoost.Matrix33.rotateX(y);
+        var rotateMatrixY = new GLBoost.Matrix33.rotateY(x);
+        var rotMat = rotateMatrixX.multiply(rotateMatrixY);
+        var rotatedVector = rotMat.multiplyVector(this.camera.eye);
+        this.camera.eye = rotatedVector;
     },
 
     //タッチorクリック終了処理
