@@ -11,14 +11,14 @@ phina.define("tac.MainScene", {
     _member: {
         //ラベル用パラメータ
         labelParam: {
-            fill: "white",
+            fill: "black",
             stroke: "blue",
             strokeWidth: 2,
 
             fontFamily: "Orbitron",
             align: "center",
             baseline: "middle",
-            fontSize: 32,
+            fontSize: 16,
             fontWeight: ''
         },
         scorelabelParam: {
@@ -57,6 +57,15 @@ phina.define("tac.MainScene", {
         //３Ｄセットアップ
         this.layer = this.setup3D(SC_W, SC_H);
         this.layer.setOrigin(0.5, 0.5).setPosition(SC_W*0.5, SC_H*0.5);
+
+        //FPS表示
+        var fpsLabel = phina.display.Label({text:"FPS"}.$safe(this.labelParam))
+            .setOrigin(0,0)
+            .addChildTo(this);
+        fpsLabel.fps = 0;
+        fpsLabel.update = function() {
+            this.text = "FPS:"+this.fps;
+        }
 
         //目隠し
         this.mask = phina.display.RectangleShape(param)
