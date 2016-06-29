@@ -22,5 +22,5 @@ var glb = GLBoost;
 window.onload = function() {
     app = tac.Application();
     app.run();
-    app.enableStats();
+//    app.enableStats();
 };
