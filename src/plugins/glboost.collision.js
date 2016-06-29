@@ -7,7 +7,7 @@
 
 GLBoost.Collision = {};
 
-//PointƒIƒuƒWƒFƒNƒg
+//Pointã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
 GLBoost.Collision.Point = function(position) {
     this.position = new GLBoost.Vector3(position.x, position.y, position.z);
 };
@@ -15,7 +15,7 @@ GLBoost.Collision.Point.prototype.clone = function() {
     return new GLBoost.Collision.Point(this.position);
 };
 
-//LineƒIƒuƒWƒFƒNƒg
+//Lineã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
 GLBoost.Collision.Line = function(start, end) {
     this.start = new GLBoost.Vector3(start.x, start.y, start.z);
     this.end = new GLBoost.Vector3(end.x, end.y, end.z);
@@ -24,7 +24,7 @@ GLBoost.Collision.Line.prototype.clone = function() {
     return new GLBoost.Collision.Line(this.start, this.end);
 };
 
-//BoxƒIƒuƒWƒFƒNƒg
+//Boxã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
 GLBoost.Collision.Box = function(min, max) {
     this.min = new GLBoost.Vector3(min.x, min.y, min.z);
     this.max = new GLBoost.Vector3(max.x, max.y, max.z);
@@ -33,7 +33,7 @@ GLBoost.Collision.Box.prototype.clone = function() {
     return new GLBoost.Collision.Box(this.min, this.max);
 };
 
-//SphereƒIƒuƒWƒFƒNƒg
+//Sphereã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
 GLBoost.Collision.Sphere = function(position, radius) {
     this.position = new GLBoost.Vector3(position.x, position.y, position.z);
     this.radius = radius;
@@ -42,7 +42,7 @@ GLBoost.Collision.Sphere.prototype.clone = function() {
     return new GLBoost.Collision.Sphere(this.position, this.radius);
 };
 
-//PolygonƒIƒuƒWƒFƒNƒg
+//Polygonã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
 GLBoost.Collision.Polygon = function(p1, p2, p3) {
     this.p1 = new GLBoost.Vector3(p1.x, p1.y, p1.z);
     this.p2 = new GLBoost.Vector3(p2.x, p2.y, p2.z);
@@ -52,38 +52,38 @@ GLBoost.Collision.Polygon.prototype.clone = function() {
     return new GLBoost.Collision.Polygon(this.p1, this.p2, this.p3);
 };
 
-//“_‚Æü•ª‚ÌÚG”»’è
+//ç‚¹ã¨ç·šåˆ†ã®æ¥è§¦åˆ¤å®š
 GLBoost.Collision.Point.prototype.testLine(start, end)
 {
-    var tmp = end.clone().substract(start);   //n“_‚©‚çI“_‚ÖŒü‚©‚¤ƒxƒNƒgƒ‹
+    var tmp = end.clone().substract(start);   //å§‹ç‚¹ã‹ã‚‰çµ‚ç‚¹ã¸å‘ã‹ã†ãƒ™ã‚¯ãƒˆãƒ«
     var vl = tmp.clone().nomalize();
-    tmp = this.position.clone().substract(start);	//n“_‚©‚ç”»’è“_‚ÖŒü‚©‚¤ƒxƒNƒgƒ‹
+    tmp = this.position.clone().substract(start);	//å§‹ç‚¹ã‹ã‚‰åˆ¤å®šç‚¹ã¸å‘ã‹ã†ãƒ™ã‚¯ãƒˆãƒ«
     var vp = tmp.clone().nomalize();
 
-	// n“_‚ğ²‚Æ‚µ‚½ü(n“_,”»’è“_)‚Æü(n“_,I“_)‚ÌŠp“x‚ª90“xˆÈã‚ ‚Á‚½‚çfalse‚ğ•Ô‚·D
+	// å§‹ç‚¹ã‚’è»¸ã¨ã—ãŸç·š(å§‹ç‚¹,åˆ¤å®šç‚¹)ã¨ç·š(å§‹ç‚¹,çµ‚ç‚¹)ã®è§’åº¦ãŒ90åº¦ä»¥ä¸Šã‚ã£ãŸã‚‰falseã‚’è¿”ã™ï¼
 	var dot = vp.dotProduct(vl);
 	if( dot < 0 ) return false;
 
-	// I“_‚ğŒ´“_‚É‚µ‚Än“_‚ÖŒü‚©‚¤ƒxƒNƒgƒ‹
+	// çµ‚ç‚¹ã‚’åŸç‚¹ã«ã—ã¦å§‹ç‚¹ã¸å‘ã‹ã†ãƒ™ã‚¯ãƒˆãƒ«
 	vl.multiply(-1);
-	// I“_‚ğŒ´“_‚É‚µ‚Ä”»’è“_‚ÖŒü‚©‚¤ƒxƒNƒgƒ‹
+	// çµ‚ç‚¹ã‚’åŸç‚¹ã«ã—ã¦åˆ¤å®šç‚¹ã¸å‘ã‹ã†ãƒ™ã‚¯ãƒˆãƒ«
 	tmp = this.position.clone().substract(end);
 	var vp = tmp.clone().nomalize();
 
-	// I“_‚ğ²‚Æ‚µ‚½ü(I“_,”»’è“_)‚Æü(I“_,n“_)‚ÌŠp“x‚ª90“xˆÈã‚ ‚Á‚½‚çfalse‚ğ•Ô‚·D
+	// çµ‚ç‚¹ã‚’è»¸ã¨ã—ãŸç·š(çµ‚ç‚¹,åˆ¤å®šç‚¹)ã¨ç·š(çµ‚ç‚¹,å§‹ç‚¹)ã®è§’åº¦ãŒ90åº¦ä»¥ä¸Šã‚ã£ãŸã‚‰falseã‚’è¿”ã™ï¼
 	return vp.dotProduct(vl) < 0? false: true;
 }
 
-//“_‚Æ–Ê‚ÌÕ“Ë”»’è
+//ç‚¹ã¨é¢ã®è¡çªåˆ¤å®š
 GLBoost.Collision.Point.prototype.testPolygon(polygon)
 {
 	var tmp1 = p2.clone().substract(p1);
 	var tmp2 = p3.clone().substract(p2);
 	tmp1 = tmp1.cross(tmp2);
-	var n = tmp.normalize();	//–@ü‚ÌŒvZ
+	var n = tmp.normalize();	//æ³•ç·šã®è¨ˆç®—
 
-	var dis = Math.abs(point.dotProduct(n));		//‹——£‚ÌZo
-	if( -0.0001 < dis && dis < 0.0001 )return true;	//ˆê‰Œë·‚ğl—¶
+	var dis = Math.abs(point.dotProduct(n));		//è·é›¢ã®ç®—å‡º
+	if( -0.0001 < dis && dis < 0.0001 )return true;	//ä¸€å¿œèª¤å·®ã‚’è€ƒæ…®
 	return false;
 }
 
