@@ -117,34 +117,35 @@ phina.define("tac.MainScene", {
             width: width,
             height: height
         }).addChildTo(this);
+        var glBoostContext = layer.glBoostContext;
 
-        var material = new GLBoost.ClassicMaterial(layer.canvas);
-        var texture = new GLBoost.Texture('assets/texture.png');
+        var material = glBoostContext.createClassicMaterial(layer.canvas);
+        var texture = glBoostContext.createTexture('assets/texture.png');
         material.diffuseTexture = texture;
 
-        var planeGeometry = new GLBoost.Plane(10, 10, 10, 10, null);
-        var plane = new GLBoost.Mesh(planeGeometry, material);
+        var planeGeometry = glBoostContext.createPlane(10, 10, 10, 10, null);
+        var plane = glBoostContext.createMesh(planeGeometry, material);
         plane.translate = new GLBoost.Vector3(0, 0, 0);
         layer.scene.addChild(plane);
 
-        var material2 = new GLBoost.ClassicMaterial(layer.canvas);
-        var texture2 = new GLBoost.Texture('assets/logo.png');
+        var material2 = glBoostContext.createClassicMaterial(layer.canvas);
+        var texture2 = glBoostContext.createTexture('assets/logo.png');
         material2.diffuseTexture = texture2;
 
-        var cubeGeometry = new GLBoost.Cube(new GLBoost.Vector3(1,1,1), new GLBoost.Vector4(1,1,1,1));
-        var cube = new GLBoost.Mesh(cubeGeometry, material2);
+        var cubeGeometry = glBoostContext.createCube(new GLBoost.Vector3(1,1,1), new GLBoost.Vector4(1,1,1,1));
+        var cube = glBoostContext.createMesh(cubeGeometry, material2);
         cube.translate = new GLBoost.Vector3(0, 3, 0);
 //        layer.scene.add(cube);
         this.cube = cube;
 
         var mqo = phina.asset.AssetManager.get("mqo", "gradriel");
-        var meshes = mqo.buildMesh();
+        var meshes = mqo.buildMeshGLBoost(glBoostContext);
         var m = meshes[0];
         m.translate = new GLBoost.Vector3(0, 0, 0);
         layer.scene.addChild(m);
 
         var mqo = phina.asset.AssetManager.get("mqo", "ground");
-        var meshes = mqo.buildMesh();
+        var meshes = mqo.buildMeshGLBoost(glBoostContext);
         var m = meshes[0];
         m.translate = new GLBoost.Vector3(0, -5, 0);
         m.scale = new GLBoost.Vector3(5.0, 1.5, 5.0);
@@ -161,7 +162,7 @@ phina.define("tac.MainScene", {
 */
         });
 
-        this.camera = new GLBoost.Camera({
+        this.camera = glBoostContext.createCamera({
             eye: new GLBoost.Vector3(0.0, 15, 40.0),
             center: new GLBoost.Vector3(0.0, 5.0, 0.0),
             up: new GLBoost.Vector3(0.0, 1.0, 0.0)

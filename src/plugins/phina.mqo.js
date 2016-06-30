@@ -28,8 +28,12 @@ phina.namespace(function() {
             req.send(null);
         },
 
-        buildMesh: function(canvas) {
+        buildMeshTHREE: function(canvas) {
             return this.model.build(canvas);
+        },
+
+        buildMeshGLBoost: function(glBoostContext) {
+            return this.model.build(glBoostContext);
         },
     });
 
@@ -385,12 +389,12 @@ phina.namespace(function() {
          * フェース情報からマテリアルに対応した頂点情報を構築
          * GLBoost形式専用
          */
-        buildGLBoost: function(num, mqoMat, canvas) {
+        buildGLBoost: function(num, mqoMat, glBoostContext) {
             //マテリアル情報
             var mat = null;
             if (mqoMat) {
-                mat = new GLBoost.ClassicMaterial(canvas);
-                mat.shader = new GLBoost.PhongShader(canvas);
+                mat = glBoostContext.createClassicMaterial();
+//                mat.shader = glBoostContext.createPhongShader();
 
                 var r = mqoMat.col[0];
                 var g = mqoMat.col[1];
@@ -399,20 +403,20 @@ phina.namespace(function() {
                 if (mat.ambient) mat.ambientColor = new Vector3(r*mqoMat.amb, g*mqoMat.amb, b*mqoMat.amb);
                 if (mat.specular) mat.specularColor = new Vector3(r*mqoMat.spc, g*mqoMat.spc, b*mqoMat.spc);
                 if (mqoMat.tex) {
-                      mat.diffuseTexture = new GLBoost.Texture(this.path+"/"+mqoMat.tex);
+                      mat.diffuseTexture = glBoostContext.createTexture(this.path+"/"+mqoMat.tex);
                 }
                 if (mqoMat.aplane) {
-                      mat.alphaTexure = new GLBoost.Texture(this.path+"/"+mqoMat.aplane);
+                      mat.alphaTexure = glBoostContext.createTexture(this.path+"/"+mqoMat.aplane);
                 }
             } else {
                 //デフォルトマテリアル
-                mat = new GLBoost.ClassicMaterial(canvas);
-                mat.shader = new GLBoost.PhongShader(canvas);
+                mat = glBoostContext.createClassicMaterial();
+                mat.shader = glBoostContext.createPhongShader();
                 mat.diffuseColor = new Vector3(0.7, 0.7, 0.7);
             }
 
             //ジオメトリ情報
-            var geo = new GLBoost.Geometry(canvas);
+            var geo = glBoostContext.createGeometry();
 
             //頂点情報
 /*
@@ -525,7 +529,7 @@ phina.namespace(function() {
             });
 
             //メッシュ生成
-            var obj = new GLBoost.Mesh(geo, mat);
+            var obj = glBoostContext.createMesh(geo, mat);
             return obj;
         },
 
