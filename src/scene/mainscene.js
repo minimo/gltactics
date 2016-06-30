@@ -58,13 +58,29 @@ phina.define("tac.MainScene", {
         this.layer = this.setup3D(SC_W, SC_H);
         this.layer.setOrigin(0.5, 0.5).setPosition(SC_W*0.5, SC_H*0.5);
 
+        //５秒間の平均を取る
+        var fps = [];
+        fps.average = function() {
+            var len = this.length;
+            if (len > 300) {
+                this.splice(0, 1);
+                len--;
+            }
+            var total = 0;
+            for (var i = 0; i < len; i++) {
+                total += this[i];
+            }
+            return total/len;
+        }
+
         //FPS表示
         var fpsLabel = phina.display.Label({text:"FPS"}.$safe(this.labelParam))
             .setOrigin(0,0)
             .addChildTo(this);
-        fpsLabel.fps = 0;
         fpsLabel.update = function() {
-            this.text = "FPS:"+this.fps;
+            var f = ~~(1/(app.deltaTime/1000));
+            fps.push(f);
+            this.text = "FPS : "+~~(fps.average());
         }
 
         //目隠し
@@ -91,6 +107,7 @@ phina.define("tac.MainScene", {
             var rotatedVector = rotateMatrix.multiplyVector(this.camera.eye);
             this.camera.eye = rotatedVector;
         }
+
         this.time++;
     },
 
