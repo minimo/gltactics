@@ -174,7 +174,7 @@ phina.define("tac.MainScene", {
         });
         layer.scene.addChild(this.camera);
 
-        layer.scene.prepareForRender();
+        layer.expression.prepareToRender();
         return layer;
     },
 
