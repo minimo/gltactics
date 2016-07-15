@@ -148,7 +148,7 @@ phina.define("tac.MainScene", {
         var meshes = mqo.buildMeshGLBoost(glBoostContext);
         var m = meshes[0];
         m.translate = new GLBoost.Vector3(0, -5, 0);
-        m.scale = new GLBoost.Vector3(5.0, 1.5, 5.0);
+        m.scale = new GLBoost.Vector3(10.0, 1.0, 10.0);
         layer.scene.addChild(m);
 
         var parser = new vox.Parser();
