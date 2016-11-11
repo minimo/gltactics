@@ -139,6 +139,19 @@
   global.GLBoost['BLENDTARGET10'] = 'shapetarget_10';
   global.GLBoost['RADIAN'] = 'radian';
   global.GLBoost['DEGREE'] = 'degree';
+  global.GLBoost['RENDER_TARGET_NONE_COLOR'] = 0; // gl.NONE
+  global.GLBoost['COLOR_ATTACHMENT0'] = 0x8CE0; // gl.COLOR_ATTACHMENT0
+  global.GLBoost['UNPACK_FLIP_Y_WEBGL'] = 'UNPACK_FLIP_Y_WEBGL';
+  global.GLBoost['TEXTURE_MAG_FILTER'] = 'TEXTURE_MAG_FILTER';
+  global.GLBoost['TEXTURE_MIN_FILTER'] = 'TEXTURE_MIN_FILTER';
+  global.GLBoost['LINEAR'] = 'LINEAR';
+  global.GLBoost['LINEAR_MIPMAP_LINEAR'] = 'LINEAR_MIPMAP_LINEAR';
+  global.GLBoost['NEAREST'] = 'NEAREST';
+  global.GLBoost['TEXTURE_WRAP_S'] = 'TEXTURE_WRAP_S';
+  global.GLBoost['TEXTURE_WRAP_T'] = 'TEXTURE_WRAP_T';
+  global.GLBoost['REPEAT'] = 'REPEAT';
+  global.GLBoost['CLAMP_TO_EDGE'] = 'CLAMP_TO_EDGE';
+  global.GLBoost['MIRRORED_REPEAT'] = 'MIRRORED_REPEAT';
 
   var GLBoost$1 = global.GLBoost;
 
@@ -148,6 +161,15 @@
     }
     return gl instanceof WebGL2RenderingContext;
   };
+
+  var Vector2 = function Vector2(x, y) {
+    babelHelpers.classCallCheck(this, Vector2);
+
+    this.x = x;
+    this.y = y;
+  };
+
+  GLBoost$1["Vector2"] = Vector2;
 
   var Vector4 = function () {
     function Vector4(x, y, z, w) {
@@ -160,13 +182,28 @@
     }
 
     babelHelpers.createClass(Vector4, [{
-      key: "isEqual",
+      key: 'isEqual',
       value: function isEqual(vec) {
         if (this.x === vec.x && this.y === vec.y && this.z === vec.z && this.w === vec.w) {
           return true;
         } else {
           return false;
         }
+      }
+
+      /**
+       * Zero Vector
+       */
+
+    }, {
+      key: 'toVector3',
+      value: function toVector3() {
+        return new Vector3(this.x, this.y, this.z);
+      }
+    }], [{
+      key: 'zero',
+      value: function zero() {
+        return new Vector4(0, 0, 0, 1);
       }
     }]);
     return Vector4;
@@ -198,14 +235,14 @@
        */
 
     }, {
-      key: 'length',
-      value: function length() {
-        return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
-      }
-    }, {
       key: 'clone',
       value: function clone() {
         return new Vector3(this.x, this.y, this.z);
+      }
+    }, {
+      key: 'length',
+      value: function length() {
+        return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
       }
 
       /*
@@ -232,17 +269,20 @@
        */
 
     }, {
-      key: 'lengthSquared',
-      value: function lengthSquared(vec3) {
-        return vec3.x * vec3.x + vec3.y * vec3.y + vec3.z * vec3.z;
+      key: 'lengthTo',
+      value: function lengthTo(vec3) {
+        var deltaX = vec3.x - this.x;
+        var deltaY = vec3.y - this.y;
+        var deltaZ = vec3.z - this.z;
+        return Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
       }
+    }, {
+      key: 'dotProduct',
+
 
       /**
        * 内積
        */
-
-    }, {
-      key: 'dotProduct',
       value: function dotProduct(vec3) {
         return this.x * vec3.x + this.y * vec3.y + this.z * vec3.z;
       }
@@ -263,7 +303,9 @@
         var y = this.z * v.x - this.x * v.z;
         var z = this.x * v.y - this.y * v.x;
 
-        this.setComponents(x, y, z);
+        this.x = x;
+        this.y = y;
+        this.z = z;
 
         return this;
       }
@@ -367,10 +409,28 @@
       value: function toVector4() {
         return new Vector4(this.x, this.y, this.z, 1.0);
       }
+    }, {
+      key: 'toString',
+      value: function toString() {
+        return '(' + this.x + ', ' + this.y + ', ' + this.z + ')';
+      }
     }], [{
       key: 'zero',
       value: function zero() {
         return new Vector3(0, 0, 0);
+      }
+    }, {
+      key: 'lengthSquared',
+      value: function lengthSquared(vec3) {
+        return vec3.x * vec3.x + vec3.y * vec3.y + vec3.z * vec3.z;
+      }
+    }, {
+      key: 'lengthBtw',
+      value: function lengthBtw(lhv, rhv) {
+        var deltaX = rhv.x - lhv.x;
+        var deltaY = rhv.y - lhv.y;
+        var deltaZ = rhv.z - lhv.z;
+        return Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
       }
     }, {
       key: 'dotProduct',
@@ -421,15 +481,6 @@
   }();
 
   GLBoost$1['Vector3'] = Vector3;
-
-  var Vector2 = function Vector2(x, y) {
-    babelHelpers.classCallCheck(this, Vector2);
-
-    this.x = x;
-    this.y = y;
-  };
-
-  GLBoost$1["Vector2"] = Vector2;
 
   var MathUtil = function () {
     function MathUtil() {
@@ -523,12 +574,17 @@
        */
 
     }, {
-      key: 'rotateX',
-
+      key: 'clone',
+      value: function clone() {
+        return new Matrix33(this.m[0], this.m[3], this.m[6], this.m[1], this.m[4], this.m[7], this.m[2], this.m[5], this.m[8]);
+      }
 
       /**
        * Create X oriented Rotation Matrix
        */
+
+    }, {
+      key: 'rotateX',
       value: function rotateX(angle) {
         var radian = 0;
         if (GLBoost$1["ANGLE_UNIT"] === GLBoost$1.DEGREE) {
@@ -1142,6 +1198,23 @@
         return this.m00 + ' ' + this.m01 + ' ' + this.m02 + ' ' + this.m03 + ' \n' + this.m10 + ' ' + this.m11 + ' ' + this.m12 + ' ' + this.m13 + ' \n' + this.m20 + ' ' + this.m21 + ' ' + this.m22 + ' ' + this.m23 + ' \n' + this.m30 + ' ' + this.m31 + ' ' + this.m32 + ' ' + this.m33 + ' \n';
       }
     }, {
+      key: 'nearZeroToZero',
+      value: function nearZeroToZero(value) {
+        if (Math.abs(value) < 0.00001) {
+          value = 0;
+        } else if (0.99999 < value && value < 1.00001) {
+          value = 1;
+        } else if (-1.00001 < value && value < -0.99999) {
+          value = -1;
+        }
+        return value;
+      }
+    }, {
+      key: 'toStringApproximately',
+      value: function toStringApproximately() {
+        return this.nearZeroToZero(this.m00) + ' ' + this.nearZeroToZero(this.m01) + ' ' + this.nearZeroToZero(this.m02) + ' ' + this.nearZeroToZero(this.m03) + ' \n' + this.nearZeroToZero(this.m10) + ' ' + this.nearZeroToZero(this.m11) + ' ' + this.nearZeroToZero(this.m12) + ' ' + this.nearZeroToZero(this.m13) + ' \n' + this.nearZeroToZero(this.m20) + ' ' + this.nearZeroToZero(this.m21) + ' ' + this.nearZeroToZero(this.m22) + ' ' + this.nearZeroToZero(this.m23) + ' \n' + this.nearZeroToZero(this.m30) + ' ' + this.nearZeroToZero(this.m31) + ' ' + this.nearZeroToZero(this.m32) + ' ' + this.nearZeroToZero(this.m33) + ' \n';
+      }
+    }, {
       key: 'm00',
       set: function set(val) {
         this.m[0] = val;
@@ -1602,10 +1675,15 @@
     babelHelpers.createClass(MiscUtil, null, [{
       key: 'isDefinedAndTrue',
       value: function isDefinedAndTrue(value) {
-        if (typeof value !== 'undefined' && value) {
-          return true;
+        return !!(typeof value !== 'undefined' && value);
+      }
+    }, {
+      key: 'getTheValueOrAlternative',
+      value: function getTheValueOrAlternative(value, alternativeIfTheValueIsNullOrUndefined) {
+        if (typeof value !== 'undefined' && value != null) {
+          return value;
         } else {
-          return false;
+          return alternativeIfTheValueIsNullOrUndefined;
         }
       }
     }, {
@@ -1619,14 +1697,14 @@
     return MiscUtil;
   }();
 
-  var singleton$2 = Symbol();
-  var singletonEnforcer$2 = Symbol();
+  var singleton$4 = Symbol();
+  var singletonEnforcer$4 = Symbol();
 
   var GLBoostMonitor = function () {
     function GLBoostMonitor(enforcer) {
       babelHelpers.classCallCheck(this, GLBoostMonitor);
 
-      if (enforcer !== singletonEnforcer$2) {
+      if (enforcer !== singletonEnforcer$4) {
         throw new Error('This is a Singleton class. get the instance using \'getInstance\' static method.');
       }
 
@@ -1758,10 +1836,10 @@
     }], [{
       key: 'getInstance',
       value: function getInstance() {
-        if (!this[singleton$2]) {
-          this[singleton$2] = new GLBoostMonitor(singletonEnforcer$2);
+        if (!this[singleton$4]) {
+          this[singleton$4] = new GLBoostMonitor(singletonEnforcer$4);
         }
-        return this[singleton$2];
+        return this[singleton$4];
       }
     }]);
     return GLBoostMonitor;
@@ -1771,6 +1849,7 @@
 
   var GLBoostObject = function () {
     function GLBoostObject(glBoostContext) {
+      var toRegister = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
       babelHelpers.classCallCheck(this, GLBoostObject);
 
       if (this.constructor === GLBoostObject) {
@@ -1780,7 +1859,10 @@
       this._glBoostContext = glBoostContext;
       this._glContext = glBoostContext.glContext;
       this._glBoostMonitor = GLBoostMonitor.getInstance();
-      this._glBoostMonitor.registerGLBoostObject(this);
+      this._toRegister = toRegister;
+      if (this._toRegister) {
+        this._glBoostMonitor.registerGLBoostObject(this);
+      }
       this._userFlavorName = '';
       this._readyForDiscard = false;
     }
@@ -1807,7 +1889,9 @@
       key: 'readyForDiscard',
       value: function readyForDiscard() {
         this._readyForDiscard = true;
-        this._glBoostMonitor.deregisterGLBoostObject(this);
+        if (this._toRegister) {
+          this._glBoostMonitor.deregisterGLBoostObject(this);
+        }
       }
     }, {
       key: 'belongingCanvasId',
@@ -1825,7 +1909,7 @@
     }, {
       key: 'instanceNameWithUserFlavor',
       get: function get() {
-        this._instanceName + '_' + this._userFlavorName;
+        return this._instanceName + '_' + this._userFlavorName;
       }
     }, {
       key: 'isReadyForDiscard',
@@ -1836,24 +1920,149 @@
     return GLBoostObject;
   }();
 
-  var Element = function (_GLBoostObject) {
-    babelHelpers.inherits(Element, _GLBoostObject);
+  var L_Element = function (_GLBoostObject) {
+    babelHelpers.inherits(L_Element, _GLBoostObject);
 
-    function Element(glBoostContext) {
-      babelHelpers.classCallCheck(this, Element);
+    function L_Element(glBoostContext) {
+      var toRegister = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+      babelHelpers.classCallCheck(this, L_Element);
 
-      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Element).call(this, glBoostContext));
+      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(L_Element).call(this, glBoostContext, toRegister));
 
-      _this._parent = null;
       _this._translate = Vector3.zero();
+      _this._scale = new Vector3(1, 1, 1);
+
       _this._rotate = Vector3.zero();
       _this._quaternion = new Quaternion(0, 0, 0, 1);
-      _this._scale = new Vector3(1, 1, 1);
       _this._matrix = Matrix44.identity();
+
       _this._finalMatrix = Matrix44.identity();
-      _this._invMatrix = Matrix44.identity();
-      _this._dirtyAsElement = false;
+
+      _this._dirtyAsElement = true;
       _this._currentCalcMode = 'euler'; // true: calc rotation matrix using quaternion. false: calc rotation matrix using Euler
+
+      return _this;
+    }
+
+    babelHelpers.createClass(L_Element, [{
+      key: '_needUpdate',
+      value: function _needUpdate() {
+        this._dirtyAsElement = true;
+      }
+    }, {
+      key: 'multiplyMatrix',
+      value: function multiplyMatrix(mat) {
+        this._matrix = mat.clone();
+        this._currentCalcMode = 'matrix';
+        this._needUpdate();
+      }
+    }, {
+      key: 'translate',
+      set: function set(vec) {
+        if (this._translate.isEqual(vec)) {
+          return;
+        }
+        this._translate = vec;
+        this._needUpdate();
+      },
+      get: function get() {
+        return this._translate;
+      }
+    }, {
+      key: 'rotate',
+      set: function set(vec) {
+        if (this._currentCalcMode !== 'euler') {
+          this._currentCalcMode = 'euler';
+          this._needUpdate();
+        }
+        if (this._rotate.isEqual(vec)) {
+          return;
+        }
+        this._rotate = vec;
+        this._needUpdate();
+      },
+      get: function get() {
+        return this._rotate;
+      }
+    }, {
+      key: 'scale',
+      set: function set(vec) {
+        if (this._scale.isEqual(vec)) {
+          return;
+        }
+        this._scale = vec;
+        this._needUpdate();
+      },
+      get: function get() {
+        return this._scale;
+      }
+    }, {
+      key: 'quaternion',
+      set: function set(quat) {
+        if (this._currentCalcMode !== 'quaternion') {
+          this._currentCalcMode = 'quaternion';
+          this._needUpdate();
+        }
+        if (this._quaternion.isEqual(quat)) {
+          return;
+        }
+        this._quaternion = quat;
+        this._needUpdate();
+      },
+      get: function get() {
+        return this._quaternion;
+      }
+    }, {
+      key: 'transformMatrix',
+      get: function get() {
+        if (this._dirtyAsElement) {
+          var matrix = Matrix44.identity();
+          if (this._currentCalcMode === 'matrix') {
+            this._finalMatrix = matrix.multiply(this.matrix);
+            this._dirtyAsElement = false;
+            return this._finalMatrix.clone();
+          }
+
+          var rotationMatrix = null;
+          if (this._currentCalcMode === 'quaternion') {
+            rotationMatrix = this.quaternion.rotationMatrix;
+          } else {
+            rotationMatrix = Matrix44.rotateX(this.rotate.x).multiply(Matrix44.rotateY(this.rotate.y)).multiply(Matrix44.rotateZ(this.rotate.z));
+          }
+
+          this._finalMatrix = matrix.multiply(Matrix44.scale(this.scale)).multiply(rotationMatrix);
+          this._finalMatrix.m03 = this.translate.x;
+          this._finalMatrix.m13 = this.translate.y;
+          this._finalMatrix.m23 = this.translate.z;
+
+          this._dirtyAsElement = false;
+        }
+
+        return this._finalMatrix.clone();
+      }
+    }, {
+      key: 'currentCalcMode',
+      set: function set(mode) {
+        this._currentCalcMode = mode;
+      },
+      get: function get() {
+        return this._currentCalcMode;
+      }
+    }]);
+    return L_Element;
+  }(GLBoostObject);
+
+  var M_Element = function (_L_Element) {
+    babelHelpers.inherits(M_Element, _L_Element);
+
+    function M_Element(glBoostContext) {
+      babelHelpers.classCallCheck(this, M_Element);
+
+      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(M_Element).call(this, glBoostContext));
+
+      _this._parent = null;
+      _this._invMatrix = Matrix44.identity();
+      _this._matrixGetMode = ''; // 'notanimated', 'animate_<input_value>'
       _this._calculatedInverseMatrix = false;
       _this._updateCountAsElement = 0;
       _this._accumulatedAncestryNameWithUpdateInfoString = '';
@@ -1865,10 +2074,12 @@
 
       _this._activeAnimationLineName = null;
 
+      _this._camera = null;
+      _this._customFunction = null;
       return _this;
     }
 
-    babelHelpers.createClass(Element, [{
+    babelHelpers.createClass(M_Element, [{
       key: '_needUpdate',
       value: function _needUpdate() {
         this._dirtyAsElement = true;
@@ -1882,6 +2093,9 @@
           return AnimationUtil.interpolate(animation[type].input, animation[type].output, value, animation[type].outputComponentN);
         } else {
           //  console.warn(this._instanceName + 'doesn't have ' + type + ' animation data. GLBoost returned default ' + type + ' value.');
+          if (type == 'quaternion') {
+            //        return new Quaternion(0, 0, 0, 1);
+          }
           return this['_' + type];
         }
       }
@@ -1896,9 +2110,24 @@
         return this._getAnimatedTransformValue(value, this._animationLine[lineName], 'translate');
       }
     }, {
+      key: 'getTranslateNotAnimated',
+      value: function getTranslateNotAnimated() {
+        return this._translate;
+      }
+    }, {
       key: 'getRotateAt',
       value: function getRotateAt(lineName, value) {
         return this._getAnimatedTransformValue(value, this._animationLine[lineName], 'rotate');
+      }
+    }, {
+      key: 'getRotateNotAnimated',
+      value: function getRotateNotAnimated() {
+        return this._rotate;
+      }
+    }, {
+      key: 'getQuaternionNotAnimated',
+      value: function getQuaternionNotAnimated() {
+        return this._quaternion;
       }
     }, {
       key: 'getQuaternionAt',
@@ -1911,16 +2140,90 @@
         return this._getAnimatedTransformValue(value, this._animationLine[lineName], 'scale');
       }
     }, {
-      key: 'multiplyMatrix',
-      value: function multiplyMatrix(mat) {
-        this._matrix = mat;
-        this._currentCalcMode = 'matrix';
-        this._needUpdate();
+      key: 'getScaleNotAnimated',
+      value: function getScaleNotAnimated() {
+        return this._scale;
       }
     }, {
       key: 'getMatrixAt',
       value: function getMatrixAt(lineName, value) {
         return this._getAnimatedTransformValue(value, this._animationLine[lineName], 'matrix');
+      }
+    }, {
+      key: 'getMatrixNotAnimated',
+      value: function getMatrixNotAnimated() {
+        return this._matrix;
+      }
+    }, {
+      key: 'getTransformMatrixNotAnimated',
+      value: function getTransformMatrixNotAnimated() {
+        if (this._dirtyAsElement || this._matrixGetMode !== 'notanimated') {
+          var matrix = Matrix44.identity();
+          if (this._currentCalcMode === 'matrix') {
+            this._finalMatrix = matrix.multiply(this.getMatrixNotAnimated());
+            this._dirtyAsElement = false;
+            return this._finalMatrix.clone();
+          }
+
+          var rotationMatrix = null;
+          if (this._currentCalcMode === 'quaternion') {
+            rotationMatrix = this.getQuaternionNotAnimated().rotationMatrix;
+          } else {
+            rotationMatrix = Matrix44.rotateX(this.getRotateNotAnimated().x).multiply(Matrix44.rotateY(this.getRotateNotAnimated().y)).multiply(Matrix44.rotateZ(this.getRotateNotAnimated().z));
+          }
+
+          this._finalMatrix = matrix.multiply(Matrix44.scale(this.getScaleNotAnimated())).multiply(rotationMatrix);
+          this._finalMatrix.m03 = this.getTranslateNotAnimated().x;
+          this._finalMatrix.m13 = this.getTranslateNotAnimated().y;
+          this._finalMatrix.m23 = this.getTranslateNotAnimated().z;
+
+          this._dirtyAsElement = false;
+          this._matrixGetMode = 'notanimated';
+        }
+
+        return this._finalMatrix.clone();
+      }
+    }, {
+      key: 'getTransformMatrixOnlyRotateOn',
+      value: function getTransformMatrixOnlyRotateOn(value) {
+
+        var rotationMatrix = null;
+        if (this._currentCalcMode === 'quaternion') {
+          rotationMatrix = this.getQuaternionAt('time', value).rotationMatrix;
+        } else if (this._currentCalcMode === 'matrix') {
+          rotationMatrix = this.getMatrixAt('time', value);
+          rotationMatrix.m03 = 0;
+          rotationMatrix.m13 = 0;
+          rotationMatrix.m23 = 0;
+          rotationMatrix.m30 = 0;
+          rotationMatrix.m31 = 0;
+          rotationMatrix.m32 = 0;
+        } else {
+          rotationMatrix = Matrix44.rotateX(this.getRotate('time', value).x).multiply(Matrix44.rotateY(this.getRotateAt('time', value).y)).multiply(Matrix44.rotateZ(this.getRotateAt('time', value).z));
+        }
+
+        return rotationMatrix.clone();
+      }
+    }, {
+      key: 'getTransformMatrixOnlyRotateNotAnimated',
+      value: function getTransformMatrixOnlyRotateNotAnimated() {
+
+        var rotationMatrix = null;
+        if (this._currentCalcMode === 'quaternion') {
+          rotationMatrix = this.getQuaternionNotAnimated().rotationMatrix;
+        } else if (this._currentCalcMode === 'matrix') {
+          rotationMatrix = this.getMatrixNotAnimated();
+          rotationMatrix.m03 = 0;
+          rotationMatrix.m13 = 0;
+          rotationMatrix.m23 = 0;
+          rotationMatrix.m30 = 0;
+          rotationMatrix.m31 = 0;
+          rotationMatrix.m32 = 0;
+        } else {
+          rotationMatrix = Matrix44.rotateX(this.getRotateNotAnimated().x).multiply(Matrix44.rotateY(this.getRotateNotAnimated().y)).multiply(Matrix44.rotateZ(this.getRotateNotAnimated().z));
+        }
+
+        return rotationMatrix.clone();
       }
     }, {
       key: '_accumulateMyAndParentNameWithUpdateInfo',
@@ -2045,6 +2348,9 @@
         }
       }
     }, {
+      key: 'prepareToRender',
+      value: function prepareToRender() {}
+    }, {
       key: 'updateCountAsElement',
       get: function get() {
         return this._updateCountAsElement;
@@ -2133,10 +2439,14 @@
     }, {
       key: 'transformMatrix',
       get: function get() {
-        if (this._dirtyAsElement) {
+        var input = null;
+        if (this._activeAnimationLineName !== null) {
+          input = this._getCurrentAnimationInputValue(this._activeAnimationLineName);
+        }
+        if (this._dirtyAsElement || input === null || this._matrixGetMode !== 'animated_' + input) {
           var matrix = Matrix44.identity();
           if (this._currentCalcMode === 'matrix') {
-            this._finalMatrix = matrix.multiply(this._matrix);
+            this._finalMatrix = matrix.multiply(this.matrix);
             this._dirtyAsElement = false;
             return this._finalMatrix.clone();
           }
@@ -2154,6 +2464,71 @@
           this._finalMatrix.m23 = this.translate.z;
 
           this._dirtyAsElement = false;
+          this._matrixGetMode = 'animated_' + input;
+        }
+
+        return this._finalMatrix.clone();
+      }
+    }, {
+      key: 'transformMatrixGLTFStyle',
+      get: function get() {
+        var input = null;
+        if (this._activeAnimationLineName !== null) {
+          input = this._getCurrentAnimationInputValue(this._activeAnimationLineName);
+        }
+        if (this._dirtyAsElement || input === null || this._matrixGetMode !== 'animated_' + input) {
+          var matrix = Matrix44.identity();
+          if (this._currentCalcMode === 'matrix') {
+            this._finalMatrix = matrix.multiply(this.matrix);
+            this._dirtyAsElement = false;
+            return this._finalMatrix.clone();
+          }
+
+          var rotationMatrix = null;
+          if (this._currentCalcMode === 'quaternion') {
+            //let quaternion = new Quaternion(this.quaternion.w, this.quaternion.z, this.quaternion.y, this.quaternion.x);
+            rotationMatrix = this.quaternion.rotationMatrix;
+          } else {
+            rotationMatrix = Matrix44.rotateX(this.rotate.x).multiply(Matrix44.rotateY(this.rotate.y)).multiply(Matrix44.rotateZ(this.rotate.z));
+          }
+
+          this._finalMatrix = Matrix44.identity();
+          this._finalMatrix.m03 = this.translate.x;
+          this._finalMatrix.m13 = this.translate.y;
+          this._finalMatrix.m23 = this.translate.z;
+          this._finalMatrix = this._finalMatrix.multiply(rotationMatrix).multiply(Matrix44.scale(this.scale));
+
+          this._dirtyAsElement = false;
+          this._matrixGetMode = 'animated_' + input;
+        }
+
+        return this._finalMatrix.clone();
+      }
+    }, {
+      key: 'transformMatrixOnInit',
+      get: function get() {
+        if (this._dirtyAsElement || this._matrixGetMode !== 'animated_0') {
+          var matrix = Matrix44.identity();
+          if (this._currentCalcMode === 'matrix') {
+            this._finalMatrix = matrix.multiply(this.getMatrixAt('time', 0));
+            this._dirtyAsElement = false;
+            return this._finalMatrix.clone();
+          }
+
+          var rotationMatrix = null;
+          if (this._currentCalcMode === 'quaternion') {
+            rotationMatrix = this.getQuaternionAt('time', 0).rotationMatrix;
+          } else {
+            rotationMatrix = Matrix44.rotateX(this.getRotateAt('time', 0).x).multiply(Matrix44.rotateY(this.getRotateAt('time', 0).y)).multiply(Matrix44.rotateZ(this.getRotateAt('time', 0).z));
+          }
+
+          this._finalMatrix = matrix.multiply(Matrix44.scale(this.getScaleAt('time', 0))).multiply(rotationMatrix);
+          this._finalMatrix.m03 = this.getTranslateAt('time', 0).x;
+          this._finalMatrix.m13 = this.getTranslateAt('time', 0).y;
+          this._finalMatrix.m23 = this.getTranslateAt('time', 0).z;
+
+          this._dirtyAsElement = false;
+          this._matrixGetMode = 'animated_0';
         }
 
         return this._finalMatrix.clone();
@@ -2177,28 +2552,12 @@
           rotationMatrix = Matrix44.rotateX(this.rotate.x).multiply(Matrix44.rotateY(this.rotate.y)).multiply(Matrix44.rotateZ(this.rotate.z));
         }
 
-        return rotationMatrix;
+        return rotationMatrix.clone();
       }
     }, {
       key: 'transformMatrixOnlyRotateOnInit',
       get: function get() {
-
-        var rotationMatrix = null;
-        if (this._currentCalcMode === 'quaternion') {
-          rotationMatrix = this.getQuaternionAt('time', 0).rotationMatrix;
-        } else if (this._currentCalcMode === 'matrix') {
-          rotationMatrix = this.getMatrixAt('time', 0);
-          rotationMatrix.m03 = 0;
-          rotationMatrix.m13 = 0;
-          rotationMatrix.m23 = 0;
-          rotationMatrix.m30 = 0;
-          rotationMatrix.m31 = 0;
-          rotationMatrix.m32 = 0;
-        } else {
-          rotationMatrix = Matrix44.rotateX(this.getRotateAt('time', 0).x).multiply(Matrix44.rotateY(this.getRotateAt('time', 0).y)).multiply(Matrix44.rotateZ(this.getRotateAt('time', 0).z));
-        }
-
-        return rotationMatrix;
+        return this.getTransformMatrixOnlyRotateOn(0);
       }
     }, {
       key: 'inverseTransformMatrix',
@@ -2219,7 +2578,7 @@
           this._accumulatedAncestryNameWithUpdateInfoString = tempString;
         }
 
-        return this._matrixAccumulatedAncestry;
+        return this._matrixAccumulatedAncestry.clone();
       }
     }, {
       key: 'normalMatrixAccumulatedAncestry',
@@ -2232,7 +2591,7 @@
           this._accumulatedAncestryNameWithUpdateInfoStringNormal = tempString;
         }
 
-        return this._normalMatrixAccumulatedAncestry;
+        return this._normalMatrixAccumulatedAncestry.clone();
       }
     }, {
       key: 'inverseTransformMatrixAccumulatedAncestryWithoutMySelf',
@@ -2248,22 +2607,22 @@
           this._accumulatedAncestryNameWithUpdateInfoStringInv = tempString;
         }
 
-        return this._invMatrixAccumulatedAncestry;
+        return this._invMatrixAccumulatedAncestry.clone();
       }
     }, {
       key: 'rotateMatrixAccumulatedAncestry',
       get: function get() {
         /*
-        var mat = this._multiplyMyAndParentTransformMatrices(this);
-        var scaleX = Math.sqrt(mat.m00*mat.m00 + mat.m10*mat.m10 + mat.m20*mat.m20);
-        var scaleY = Math.sqrt(mat.m01*mat.m01 + mat.m11*mat.m11 + mat.m21*mat.m21);
-        var scaleZ = Math.sqrt(mat.m02*mat.m02 + mat.m12*mat.m12 + mat.m22*mat.m22);
-         return new Matrix44(
-          mat.m00/scaleX, mat.m01/scaleY, mat.m02/scaleZ, 0,
-          mat.m10/scaleX, mat.m11/scaleY, mat.m12/scaleZ, 0,
-          mat.m20/scaleX, mat.m21/scaleY, mat.m22/scaleZ, 0,
-          0, 0, 0, 1
-        );*/
+         var mat = this._multiplyMyAndParentTransformMatrices(this);
+         var scaleX = Math.sqrt(mat.m00*mat.m00 + mat.m10*mat.m10 + mat.m20*mat.m20);
+         var scaleY = Math.sqrt(mat.m01*mat.m01 + mat.m11*mat.m11 + mat.m21*mat.m21);
+         var scaleZ = Math.sqrt(mat.m02*mat.m02 + mat.m12*mat.m12 + mat.m22*mat.m22);
+          return new Matrix44(
+         mat.m00/scaleX, mat.m01/scaleY, mat.m02/scaleZ, 0,
+         mat.m10/scaleX, mat.m11/scaleY, mat.m12/scaleZ, 0,
+         mat.m20/scaleX, mat.m21/scaleY, mat.m22/scaleZ, 0,
+         0, 0, 0, 1
+         );*/
         return this._multiplyMyAndParentRotateMatrices(this, true);
       }
     }, {
@@ -2303,38 +2662,854 @@
         return this._parent;
       }
     }, {
-      key: 'currentCalcMode',
-      set: function set(mode) {
-        this._currentCalcMode = mode;
+      key: 'camera',
+      set: function set(camera) {
+        this._camera = camera;
       },
       get: function get() {
-        return this._currentCalcMode;
+        return this._camera;
+      }
+    }, {
+      key: 'customFunction',
+      set: function set(func) {
+        this._customFunction = func;
+      },
+      get: function get() {
+        return this._customFunction;
       }
     }]);
-    return Element;
-  }(GLBoostObject);
+    return M_Element;
+  }(L_Element);
 
-  var Mesh = function (_Element) {
-    babelHelpers.inherits(Mesh, _Element);
+  var M_Joint = function (_M_Element) {
+    babelHelpers.inherits(M_Joint, _M_Element);
 
-    function Mesh(glBoostContext, geometry, material) {
-      babelHelpers.classCallCheck(this, Mesh);
+    function M_Joint(glBoostContext) {
+      babelHelpers.classCallCheck(this, M_Joint);
+      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(M_Joint).call(this, glBoostContext));
+    }
 
-      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Mesh).call(this, glBoostContext));
+    return M_Joint;
+  }(M_Element);
+
+  /**
+   * [en] This is the abstract class for all lights classes. Don't use this class directly.<br>
+   * [ja] 全ての光源クラスのための抽象クラスです。直接このクラスは使わないでください。
+   */
+
+  var M_AbstractLight = function (_M_Element) {
+    babelHelpers.inherits(M_AbstractLight, _M_Element);
+
+    function M_AbstractLight(glBoostContext) {
+      babelHelpers.classCallCheck(this, M_AbstractLight);
+
+      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(M_AbstractLight).call(this, glBoostContext));
+
+      if (_this.constructor === M_AbstractLight) {
+        throw new TypeError('Cannot construct AbstractLight instances directly.');
+      }
+
+      _this._gl = _this._glContext.gl;
+      return _this;
+    }
+
+    babelHelpers.createClass(M_AbstractLight, [{
+      key: 'prepareToRender',
+      value: function prepareToRender() {
+        if (this._camera) {
+          if (this._camera.customFunction) {
+            this._camera.customFunction(this);
+          }
+        }
+      }
+    }]);
+    return M_AbstractLight;
+  }(M_Element);
+
+  /**
+   * [en] This is a Point Light class.<br>
+   * [ja] 点光源クラスです。
+   */
+
+  var M_PointLight = function (_M_AbstractLight) {
+    babelHelpers.inherits(M_PointLight, _M_AbstractLight);
+
+
+    /**
+     * [en] The constructor of PointLight class. <br>
+     * [ja] PointLightクラスのコンストラクタ
+     * @param {Vector4} intensity [en] intensity as Vector4 Color [ja] Vector4による色情報で指定する光の強度
+     * @param {HTMLCanvas|string} canvas [en] canvas or canvas' id string. [ja] canvasまたはcanvasのid文字列
+     */
+
+    function M_PointLight(glBoostContext, intensity) {
+      babelHelpers.classCallCheck(this, M_PointLight);
+
+      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(M_PointLight).call(this, glBoostContext));
+
+      _this._intensity = intensity;
+
+      return _this;
+    }
+
+    babelHelpers.createClass(M_PointLight, [{
+      key: 'intensity',
+      set: function set(vec) {
+        this._intensity = vec;
+      },
+      get: function get() {
+        return this._intensity;
+      }
+    }]);
+    return M_PointLight;
+  }(M_AbstractLight);
+
+  /**
+   * [en] This is a Directional Light class.<br>
+   * [ja] 平行光源クラスです。
+   */
+
+  var M_DirectionalLight = function (_M_AbstractLight) {
+    babelHelpers.inherits(M_DirectionalLight, _M_AbstractLight);
+
+
+    /**
+     * [en] The constructor of DirectionalLight class. <br>
+     * [ja] DirectionalLightクラスのコンストラクタ
+     * @param {Vector4} intensity [en] intensity as Vector4 Color [ja] Vector4による色情報で指定する光の強度
+     * @param {Vector4} direction [en] the light (traveling) direction [ja] 光が向かう方向
+     */
+
+    function M_DirectionalLight(glBoostContext, intensity, direction) {
+      babelHelpers.classCallCheck(this, M_DirectionalLight);
+
+      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(M_DirectionalLight).call(this, glBoostContext));
+
+      _this._intensity = intensity;
+      _this._direction = direction;
+      return _this;
+    }
+
+    babelHelpers.createClass(M_DirectionalLight, [{
+      key: 'intensity',
+      set: function set(vec) {
+        this._intensity = vec;
+      },
+      get: function get() {
+        return this._intensity;
+      }
+    }, {
+      key: 'direction',
+      set: function set(vec) {
+        this._direction = vec;
+        if (this._camera) {
+          if (this._camera.customFunction) {
+            this._camera.customFunction(this);
+          }
+        }
+      },
+      get: function get() {
+        return this._direction;
+      }
+    }]);
+    return M_DirectionalLight;
+  }(M_AbstractLight);
+
+  var L_AbstractCamera = function (_L_Element) {
+    babelHelpers.inherits(L_AbstractCamera, _L_Element);
+
+    function L_AbstractCamera(glBoostContext, toRegister, lookat) {
+      babelHelpers.classCallCheck(this, L_AbstractCamera);
+
+      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(L_AbstractCamera).call(this, glBoostContext, toRegister));
+
+      if (_this.constructor === L_AbstractCamera) {
+        throw new TypeError('Cannot construct AbstractCamera instances directly.');
+      }
+
+      _this._translate = lookat.eye;
+      _this._center = lookat.center;
+      _this._up = lookat.up;
+
+      _this._dirtyView = true;
+      return _this;
+    }
+
+    babelHelpers.createClass(L_AbstractCamera, [{
+      key: '_needUpdateView',
+      value: function _needUpdateView() {
+        this._dirtyView = true;
+      }
+    }, {
+      key: 'lookAtRHMatrix',
+      value: function lookAtRHMatrix() {
+        if (this._dirtyView) {
+          this._viewMatrix = L_AbstractCamera.lookAtRHMatrix(this._translate, this._center, this._up);
+          this._dirtyView = false;
+          return this._viewMatrix.clone();
+        } else {
+          return this._viewMatrix.clone();
+        }
+      }
+    }, {
+      key: 'setAsMainCamera',
+      value: function setAsMainCamera(scene) {
+        this._mainCamera[scene.toString()] = this;
+      }
+    }, {
+      key: 'isMainCamera',
+      value: function isMainCamera(scene) {
+        return this._mainCamera[scene.toString()] === this;
+      }
+    }, {
+      key: 'translate',
+      set: function set(vec) {
+        babelHelpers.set(Object.getPrototypeOf(L_AbstractCamera.prototype), 'translate', vec, this);
+        this._needUpdateView();
+      },
+      get: function get() {
+        return babelHelpers.get(Object.getPrototypeOf(L_AbstractCamera.prototype), 'translate', this);
+      }
+    }, {
+      key: 'eye',
+      set: function set(vec) {
+        babelHelpers.set(Object.getPrototypeOf(L_AbstractCamera.prototype), 'translate', vec, this);
+        this._needUpdateView();
+      },
+      get: function get() {
+        return this._translate;
+      }
+    }, {
+      key: 'center',
+      set: function set(vec) {
+        if (this._center.isEqual(vec)) {
+          return;
+        }
+        this._center = vec;
+        this._needUpdateView();
+      },
+      get: function get() {
+        return this._center;
+      }
+    }, {
+      key: 'up',
+      set: function set(vec) {
+        if (this._up.isEqual(vec)) {
+          return;
+        }
+        this._up = vec;
+        this._needUpdateView();
+      },
+      get: function get() {
+        return this._up;
+      }
+    }, {
+      key: 'texture',
+      set: function set(texture) {
+        this._texture = texture;
+      },
+      get: function get() {
+        return this._texture;
+      }
+    }], [{
+      key: 'lookAtRHMatrix',
+      value: function lookAtRHMatrix(eye, center, up) {
+
+        var f = Vector3.normalize(Vector3.subtract(center, eye));
+        var s = Vector3.normalize(Vector3.cross(f, up));
+        var u = Vector3.cross(s, f);
+
+        return new Matrix44(s.x, s.y, s.z, -Vector3.dotProduct(s, eye), u.x, u.y, u.z, -Vector3.dotProduct(u, eye), -f.x, -f.y, -f.z, Vector3.dotProduct(f, eye), 0, 0, 0, 1);
+      }
+    }]);
+    return L_AbstractCamera;
+  }(L_Element);
+
+  var L_OrthoCamera = function (_L_AbstractCamera) {
+    babelHelpers.inherits(L_OrthoCamera, _L_AbstractCamera);
+
+    function L_OrthoCamera(glBoostContext, toRegister, lookat, ortho) {
+      babelHelpers.classCallCheck(this, L_OrthoCamera);
+
+      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(L_OrthoCamera).call(this, glBoostContext, toRegister, lookat));
+
+      _this._left = ortho.left;
+      _this._right = ortho.right;
+      _this._bottom = ortho.bottom;
+      _this._top = ortho.top;
+      _this._zNear = ortho.zNear;
+      _this._zFar = ortho.zFar;
+
+      _this._dirtyProjection = true;
+      _this._updateCountAsCameraProjection = 0;
+      return _this;
+    }
+
+    babelHelpers.createClass(L_OrthoCamera, [{
+      key: '_needUpdateProjection',
+      value: function _needUpdateProjection() {
+        this._dirtyProjection = true;
+        this._updateCountAsCameraProjection++;
+      }
+    }, {
+      key: 'projectionRHMatrix',
+      value: function projectionRHMatrix() {
+        if (this._dirtyProjection) {
+          this._projectionMatrix = L_OrthoCamera.orthoRHMatrix(this._left, this._right, this._bottom, this._top, this._zNear, this._zFar);
+          this._dirtyProjection = false;
+          return this._projectionMatrix.clone();
+        } else {
+          return this._projectionMatrix.clone();
+        }
+      }
+    }, {
+      key: 'updateCountAsCameraProjection',
+      get: function get() {
+        return this._updateCountAsCameraProjection;
+      }
+    }, {
+      key: 'left',
+      set: function set(value) {
+        if (this._left === value) {
+          return;
+        }
+        this._left = value;
+        this._needUpdateProjection();
+      },
+      get: function get() {
+        return this._left;
+      }
+    }, {
+      key: 'right',
+      set: function set(value) {
+        if (this._right === value) {
+          return;
+        }
+        this._right = value;
+        this._needUpdateProjection();
+      },
+      get: function get() {
+        return this._right;
+      }
+    }, {
+      key: 'bottom',
+      set: function set(value) {
+        if (this._bottom === value) {
+          return;
+        }
+        this._bottom = value;
+        this._needUpdateProjection();
+      },
+      get: function get() {
+        return this._bottom;
+      }
+    }, {
+      key: 'top',
+      set: function set(value) {
+        if (this._top === value) {
+          return;
+        }
+        this._top = value;
+        this._needUpdateProjection();
+      },
+      get: function get() {
+        return this._top;
+      }
+    }, {
+      key: 'zNear',
+      set: function set(value) {
+        if (this._zNear === value) {
+          return;
+        }
+        this._zNear = value;
+        this._needUpdateProjection();
+      },
+      get: function get() {
+        return this._zNear;
+      }
+    }, {
+      key: 'zFar',
+      set: function set(value) {
+        if (this._zFar === value) {
+          return;
+        }
+        this._zFar = value;
+        this._needUpdateProjection();
+      },
+      get: function get() {
+        return this._zFar;
+      }
+    }], [{
+      key: 'orthoRHMatrix',
+      value: function orthoRHMatrix(left, right, bottom, top, near, far) {
+
+        return new Matrix44(2 / (right - left), 0.0, 0.0, -(right + left) / (right - left), 0.0, 2 / (top - bottom), 0.0, -(top + bottom) / (top - bottom), 0.0, 0.0, -2 / (far - near), -(far + near) / (far - near), 0.0, 0.0, 0.0, 1.0);
+      }
+    }]);
+    return L_OrthoCamera;
+  }(L_AbstractCamera);
+
+  var M_AbstractCamera = function (_M_Element) {
+    babelHelpers.inherits(M_AbstractCamera, _M_Element);
+
+    function M_AbstractCamera(glBoostContext, toRegister) {
+      babelHelpers.classCallCheck(this, M_AbstractCamera);
+
+      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(M_AbstractCamera).call(this, glBoostContext, toRegister));
+
+      if (_this.constructor === M_AbstractCamera) {
+        throw new TypeError('Cannot construct M_AbstractCamera instances directly.');
+      }
+
+      _this._lowLevelCamera = null;
+
+      _this._updateCountAsCameraView = 0;
+      _this._mainCamera = {};
+
+      _this._texture = null; // for example, depth texture
+      return _this;
+    }
+
+    babelHelpers.createClass(M_AbstractCamera, [{
+      key: '_needUpdateView',
+      value: function _needUpdateView() {
+        this._lowLevelCamera._needUpdateView();
+        this._updateCountAsCameraView++;
+      }
+    }, {
+      key: 'setAsMainCamera',
+      value: function setAsMainCamera(scene) {
+        this._mainCamera[scene.toString()] = this;
+      }
+    }, {
+      key: 'isMainCamera',
+      value: function isMainCamera(scene) {
+        return this._mainCamera[scene.toString()] === this;
+      }
+    }, {
+      key: 'lookAtRHMatrix',
+
+
+      // ===================== delegate to low level class ========================
+
+      value: function lookAtRHMatrix() {
+        return this._lowLevelCamera.lookAtRHMatrix();
+      }
+    }, {
+      key: 'updateCountAsCameraView',
+      get: function get() {
+        return this._updateCountAsCameraView;
+      }
+    }, {
+      key: 'latestViewStateInfoString',
+      get: function get() {
+        var tempString = this._accumulateMyAndParentNameWithUpdateInfo(this);
+        tempString += '_updateCountAsCameraView_' + this._updateCountAsCameraView;
+
+        return tempString;
+      }
+    }, {
+      key: 'texture',
+      set: function set(texture) {
+        this._texture = texture;
+      },
+      get: function get() {
+        return this._texture;
+      }
+    }, {
+      key: 'translate',
+      set: function set(vec) {
+        this._lowLevelCamera.translate = vec;
+      },
+      get: function get() {
+        return this._lowLevelCamera.translate;
+      }
+    }, {
+      key: 'eye',
+      set: function set(vec) {
+        this._lowLevelCamera.eye = vec;
+      },
+      get: function get() {
+        return this._lowLevelCamera.eye;
+      }
+    }, {
+      key: 'center',
+      set: function set(vec) {
+        this._lowLevelCamera.center = vec;
+      },
+      get: function get() {
+        return this._lowLevelCamera.center;
+      }
+    }, {
+      key: 'up',
+      set: function set(vec) {
+        this._lowLevelCamera.up = vec;
+      },
+      get: function get() {
+        return this._lowLevelCamera.up;
+      }
+    }]);
+    return M_AbstractCamera;
+  }(M_Element);
+
+  var M_OrthoCamera = function (_M_AbstractCamera) {
+    babelHelpers.inherits(M_OrthoCamera, _M_AbstractCamera);
+
+    function M_OrthoCamera(glBoostContext, toRegister, lookat, ortho) {
+      babelHelpers.classCallCheck(this, M_OrthoCamera);
+
+      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(M_OrthoCamera).call(this, glBoostContext, toRegister));
+
+      _this._lowLevelCamera = new L_OrthoCamera(_this, false, lookat, ortho);
+      return _this;
+    }
+
+    // ===================== delegate to low level class ========================
+
+    babelHelpers.createClass(M_OrthoCamera, [{
+      key: '_needUpdateProjection',
+      value: function _needUpdateProjection() {
+        this._lowLevelCamera._needUpdateProjection();
+      }
+    }, {
+      key: 'projectionRHMatrix',
+      value: function projectionRHMatrix() {
+        return this._lowLevelCamera.projectionRHMatrix();
+      }
+    }, {
+      key: 'updateCountAsCameraProjection',
+      get: function get() {
+        return this._lowLevelCamera.updateCountAsCameraProjection;
+      }
+    }, {
+      key: 'left',
+      set: function set(value) {
+        this._lowLevelCamera.left = value;
+      },
+      get: function get() {
+        return this._lowLevelCamera.left;
+      }
+    }, {
+      key: 'right',
+      set: function set(value) {
+        this._lowLevelCamera.right = value;
+      },
+      get: function get() {
+        return this._lowLevelCamera.right;
+      }
+    }, {
+      key: 'bottom',
+      set: function set(value) {
+        this._lowLevelCamera.bottom = value;
+      },
+      get: function get() {
+        return this._lowLevelCamera.bottom;
+      }
+    }, {
+      key: 'top',
+      set: function set(value) {
+        this._lowLevelCamera.top = value;
+      },
+      get: function get() {
+        return this._lowLevelCamera.top;
+      }
+    }, {
+      key: 'zNear',
+      set: function set(value) {
+        this._lowLevelCamera.zNear = value;
+      },
+      get: function get() {
+        return this._lowLevelCamera.zNear;
+      }
+    }, {
+      key: 'zFar',
+      set: function set(value) {
+        this._lowLevelCamera.zFar = value;
+      },
+      get: function get() {
+        return this._lowLevelCamera.zFar;
+      }
+    }]);
+    return M_OrthoCamera;
+  }(M_AbstractCamera);
+
+  var L_PerspectiveCamera = function (_L_AbstractCamera) {
+    babelHelpers.inherits(L_PerspectiveCamera, _L_AbstractCamera);
+
+    function L_PerspectiveCamera(glBoostContext, toRegister, lookat, perspective) {
+      babelHelpers.classCallCheck(this, L_PerspectiveCamera);
+
+      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(L_PerspectiveCamera).call(this, glBoostContext, toRegister, lookat));
+
+      _this._fovy = perspective.fovy;
+      _this._aspect = perspective.aspect;
+      _this._zNear = perspective.zNear;
+      _this._zFar = perspective.zFar;
+
+      _this._dirtyProjection = true;
+      _this._updateCountAsCameraProjection = 0;
+      return _this;
+    }
+
+    babelHelpers.createClass(L_PerspectiveCamera, [{
+      key: '_needUpdateProjection',
+      value: function _needUpdateProjection() {
+        this._dirtyProjection = true;
+        this._updateCountAsCameraProjection++;
+      }
+    }, {
+      key: 'projectionRHMatrix',
+      value: function projectionRHMatrix() {
+        if (this._dirtyProjection) {
+          this._projectionMatrix = L_PerspectiveCamera.perspectiveRHMatrix(this._fovy, this._aspect, this._zNear, this._zFar);
+          this._dirtyProjection = false;
+          return this._projectionMatrix.clone();
+        } else {
+          return this._projectionMatrix.clone();
+        }
+      }
+    }, {
+      key: 'updateCountAsCameraProjection',
+      get: function get() {
+        return this._updateCountAsCameraProjection;
+      }
+    }, {
+      key: 'fovy',
+      set: function set(value) {
+        if (this._fovy === value) {
+          return;
+        }
+        this._fovy = value;
+        this._needUpdateProjection();
+      },
+      get: function get() {
+        return this._fovy;
+      }
+    }, {
+      key: 'aspect',
+      set: function set(value) {
+        if (this._aspect === value) {
+          return;
+        }
+        this._aspect = value;
+        this._needUpdateProjection();
+      },
+      get: function get() {
+        return this._aspect;
+      }
+    }, {
+      key: 'zNear',
+      set: function set(value) {
+        if (this._zNear === value) {
+          return;
+        }
+        this._zNear = value;
+        this._needUpdateProjection();
+      },
+      get: function get() {
+        return this._zNear;
+      }
+    }, {
+      key: 'zFar',
+      set: function set(value) {
+        if (this._zFar === value) {
+          return;
+        }
+        this._zFar = value;
+        this._needUpdateProjection();
+      },
+      get: function get() {
+        return this._zFar;
+      }
+    }], [{
+      key: 'perspectiveRHMatrix',
+      value: function perspectiveRHMatrix(fovy, aspect, zNear, zFar) {
+
+        var yscale = 1.0 / Math.tan(0.5 * fovy * Math.PI / 180);
+        var xscale = yscale / aspect;
+
+        return new Matrix44(xscale, 0.0, 0.0, 0.0, 0.0, yscale, 0.0, 0.0, 0.0, 0.0, -(zFar + zNear) / (zFar - zNear), -(2.0 * zFar * zNear) / (zFar - zNear), 0.0, 0.0, -1.0, 0.0);
+      }
+    }]);
+    return L_PerspectiveCamera;
+  }(L_AbstractCamera);
+
+  var M_PerspectiveCamera = function (_M_AbstractCamera) {
+    babelHelpers.inherits(M_PerspectiveCamera, _M_AbstractCamera);
+
+    function M_PerspectiveCamera(glBoostContext, toRegister, lookat, perspective) {
+      babelHelpers.classCallCheck(this, M_PerspectiveCamera);
+
+      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(M_PerspectiveCamera).call(this, glBoostContext, toRegister));
+
+      _this._lowLevelCamera = new L_PerspectiveCamera(_this, false, lookat, perspective);
+      return _this;
+    }
+
+    // ===================== delegate to low level class ========================
+
+    babelHelpers.createClass(M_PerspectiveCamera, [{
+      key: '_needUpdateProjection',
+      value: function _needUpdateProjection() {
+        this._lowLevelCamera._needUpdateProjection();
+      }
+    }, {
+      key: 'projectionRHMatrix',
+      value: function projectionRHMatrix() {
+        return this._lowLevelCamera.projectionRHMatrix();
+      }
+    }, {
+      key: 'updateCountAsCameraProjection',
+      get: function get() {
+        return this._lowLevelCamera.updateCountAsCameraProjection;
+      }
+    }, {
+      key: 'fovy',
+      set: function set(value) {
+        this._lowLevelCamera.fovy = value;
+      },
+      get: function get() {
+        return this._lowLevelCamera.fovy;
+      }
+    }, {
+      key: 'aspect',
+      set: function set(value) {
+        this._lowLevelCamera.aspect = value;
+      },
+      get: function get() {
+        return this._lowLevelCamera.aspect;
+      }
+    }, {
+      key: 'zNear',
+      set: function set(value) {
+        this._lowLevelCamera.zNear = value;
+      },
+      get: function get() {
+        return this._lowLevelCamera.zNear;
+      }
+    }, {
+      key: 'zFar',
+      set: function set(value) {
+        this._lowLevelCamera.zFar = value;
+      },
+      get: function get() {
+        return this._lowLevelCamera.zFar;
+      }
+    }]);
+    return M_PerspectiveCamera;
+  }(M_AbstractCamera);
+
+  var AABB = function () {
+    function AABB() {
+      babelHelpers.classCallCheck(this, AABB);
+
+      this._AABB_min = new Vector3(Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE);
+      this._AABB_max = new Vector3(Number.MIN_VALUE, Number.MIN_VALUE, Number.MIN_VALUE);
+      this._centerPoint = null;
+      this._lengthCenterToCorner = null;
+    }
+
+    babelHelpers.createClass(AABB, [{
+      key: 'addPosition',
+      value: function addPosition(positionVector) {
+        this._AABB_min.x = positionVector.x < this._AABB_min.x ? positionVector.x : this._AABB_min.x;
+        this._AABB_min.y = positionVector.y < this._AABB_min.y ? positionVector.y : this._AABB_min.y;
+        this._AABB_min.z = positionVector.z < this._AABB_min.z ? positionVector.z : this._AABB_min.z;
+        this._AABB_max.x = this._AABB_max.x < positionVector.x ? positionVector.x : this._AABB_max.x;
+        this._AABB_max.y = this._AABB_max.y < positionVector.y ? positionVector.y : this._AABB_max.y;
+        this._AABB_max.z = this._AABB_max.z < positionVector.z ? positionVector.z : this._AABB_max.z;
+
+        return positionVector;
+      }
+    }, {
+      key: 'updateAllInfo',
+      value: function updateAllInfo() {
+        this._centerPoint = Vector3.add(this._AABB_min, this._AABB_max).divide(2);
+        this._lengthCenterToCorner = Vector3.lengthBtw(this._centerPoint, this._AABB_max);
+      }
+    }, {
+      key: 'mergeAABB',
+      value: function mergeAABB(aabb) {
+        var isUpdated = false;
+        if (aabb.minPoint.x < this._AABB_min.x) {
+          this._AABB_min.x = aabb.minPoint.x;
+          isUpdated = true;
+        }
+        if (aabb.minPoint.y < this._AABB_min.y) {
+          this._AABB_min.y = aabb.minPoint.y;
+          isUpdated = true;
+        }
+        if (aabb.minPoint.z < this._AABB_min.z) {
+          this._AABB_min.z = aabb.minPoint.z;
+          isUpdated = true;
+        }
+        if (this._AABB_max.x < aabb.maxPoint.x) {
+          this._AABB_max.x = aabb.maxPoint.x;
+          isUpdated = true;
+        }
+        if (this._AABB_max.y < aabb.maxPoint.y) {
+          this._AABB_max.y = aabb.maxPoint.y;
+          isUpdated = true;
+        }
+        if (this._AABB_max.z < aabb.maxPoint.z) {
+          this._AABB_max.z = aabb.maxPoint.z;
+          isUpdated = true;
+        }
+        this.updateAllInfo();
+
+        return isUpdated;
+      }
+    }, {
+      key: 'minPoint',
+      get: function get() {
+        return this._AABB_min;
+      }
+    }, {
+      key: 'maxPoint',
+      get: function get() {
+        return this._AABB_max;
+      }
+    }, {
+      key: 'centerPoint',
+      get: function get() {
+        return this._centerPoint;
+      }
+    }, {
+      key: 'lengthCenterToCorner',
+      get: function get() {
+        return this._lengthCenterToCorner;
+      }
+    }], [{
+      key: 'multiplyMatrix',
+      value: function multiplyMatrix(matrix, aabb) {
+        var newAabb = new AABB();
+        newAabb._AABB_min = matrix.multiplyVector(aabb._AABB_min.toVector4()).toVector3();
+        newAabb._AABB_max = matrix.multiplyVector(aabb._AABB_max.toVector4()).toVector3();
+        newAabb.updateAllInfo();
+
+        return newAabb;
+      }
+    }]);
+    return AABB;
+  }();
+
+  GLBoost$1['AABB'] = AABB;
+
+  var M_Mesh = function (_M_Element) {
+    babelHelpers.inherits(M_Mesh, _M_Element);
+
+    function M_Mesh(glBoostContext, geometry, material) {
+      babelHelpers.classCallCheck(this, M_Mesh);
+
+      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(M_Mesh).call(this, glBoostContext));
 
       _this.geometry = geometry;
       _this.material = material;
       _this._transformedDepth = 0;
-
-      if (_this.__proto__.__proto__ && _this.__proto__.__proto__.constructor == Mesh) {
-        // this code for tmlib
-        Mesh._instanceCount = typeof Mesh._instanceCount === 'undefined' ? 0 : Mesh._instanceCount + 1;
-        _this._instanceName = Mesh.name + '_' + Mesh._instanceCount;
-      }
       return _this;
     }
 
-    babelHelpers.createClass(Mesh, [{
+    babelHelpers.createClass(M_Mesh, [{
       key: 'prepareToRender',
       value: function prepareToRender(existCamera_f, lights) {
         this._geometry.prepareToRender(existCamera_f, lights, this._material, this);
@@ -2344,8 +3519,8 @@
       }
     }, {
       key: 'draw',
-      value: function draw(lights, camera, scene) {
-        this._geometry.draw(lights, camera, this, scene);
+      value: function draw(lights, camera, scene, renderPassIndex) {
+        this._geometry.draw(lights, camera, this, scene, renderPassIndex);
       }
     }, {
       key: 'bakeTransformToGeometry',
@@ -2473,7 +3648,7 @@
       set: function set(geometry) {
         this._geometry = geometry;
         geometry._parent = this;
-        Mesh._geometries[geometry.toString()] = geometry;
+        M_Mesh._geometries[geometry.toString()] = geometry;
       },
       get: function get() {
         return this._geometry;
@@ -2491,23 +3666,30 @@
       get: function get() {
         return this._transformedDepth;
       }
+    }, {
+      key: 'AABB',
+      get: function get() {
+        var world_m = this.transformMatrixAccumulatedAncestry;
+        return AABB.multiplyMatrix(world_m, this._geometry.AABB);
+      }
     }]);
-    return Mesh;
-  }(Element);
+    return M_Mesh;
+  }(M_Element);
 
-  Mesh._geometries = {};
+  M_Mesh._geometries = {};
 
-  GLBoost$1['Mesh'] = Mesh;
+  GLBoost$1['M_Mesh'] = M_Mesh;
 
-  var Group = function (_Element) {
-    babelHelpers.inherits(Group, _Element);
+  var M_Group = function (_M_Element) {
+    babelHelpers.inherits(M_Group, _M_Element);
 
-    function Group(glBoostContext) {
-      babelHelpers.classCallCheck(this, Group);
+    function M_Group(glBoostContext) {
+      babelHelpers.classCallCheck(this, M_Group);
 
-      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Group).call(this, glBoostContext));
+      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(M_Group).call(this, glBoostContext));
 
       _this._elements = [];
+      _this._AABB = new AABB();
       return _this;
     }
 
@@ -2518,7 +3700,7 @@
      */
 
 
-    babelHelpers.createClass(Group, [{
+    babelHelpers.createClass(M_Group, [{
       key: 'addChild',
       value: function addChild(element) {
         this.removeChild(element);
@@ -2569,7 +3751,7 @@
           return element;
         }
 
-        if (element instanceof Group) {
+        if (element instanceof M_Group) {
           var children = element.getChildren();
           for (var i = 0; i < children.length; i++) {
             var hitChild = this.searchElement(userflavorName, children[i]);
@@ -2589,7 +3771,7 @@
           return element;
         }
 
-        if (element instanceof Group) {
+        if (element instanceof M_Group) {
           var children = element.getChildren();
           var results = [];
           for (var i = 0; i < children.length; i++) {
@@ -2604,94 +3786,316 @@
         }
         return null;
       }
-    }]);
-    return Group;
-  }(Element);
-
-  var GLContextImpl = function () {
-    function GLContextImpl(canvas, parent) {
-      babelHelpers.classCallCheck(this, GLContextImpl);
-
-      //    if (new.target === GLContextImpl) {
-      if (this.constructor === GLContextImpl) {
-        throw new TypeError("Cannot construct GLContextImpl instances directly");
-      }
-
-      if (!(parent instanceof GLContext)) {
-        throw new Error("This concrete class can only be instantiated from the 'GLContext' class.");
-      }
-
-      if (canvas === void 0) {
-        throw new Error("Failed to create WebGL Context due to no canvas object.");
-      }
-
-      this._canvas = canvas;
-    }
-
-    babelHelpers.createClass(GLContextImpl, [{
-      key: "init",
-      value: function init(glVersionString, ContextType) {
-
-        var gl = this._canvas.getContext(glVersionString);
-
-        if (!gl) {
-          gl = this._canvas.getContext('experimental-' + glVersionString);
-          if (!gl) {
-            throw new Error("This platform doesn't support WebGL.");
+    }, {
+      key: 'updateAABB',
+      value: function updateAABB() {
+        var aabb = function mergeAABBRecursively(elem) {
+          if (elem instanceof M_Group) {
+            var children = elem.getChildren();
+            for (var i = 0; i < children.length; i++) {
+              var aabb = mergeAABBRecursively(children[i]);
+              if (aabb instanceof AABB) {
+                elem.AABB.mergeAABB(aabb);
+              } else {
+                console.assert('calculation of AABB error!');
+              }
+            }
+            return elem.AABB;
           }
-        }
+          if (elem instanceof M_Mesh) {
+            return elem.AABB;
+          }
 
-        if (!gl instanceof ContextType) {
-          throw new Error("Unexpected rendering context.");
-        }
-
-        this._gl = gl;
+          return null;
+        }(this);
+        this.AABB.mergeAABB(aabb);
       }
     }, {
-      key: "gl",
+      key: 'AABB',
       get: function get() {
-        return this._gl;
-      }
-    }, {
-      key: "canvas",
-      get: function get() {
-        return this._canvas;
+        return this._AABB;
       }
     }]);
-    return GLContextImpl;
-  }();
+    return M_Group;
+  }(M_Element);
 
-  var GLContextWebGL2Impl = function (_GLContextImpl) {
-    babelHelpers.inherits(GLContextWebGL2Impl, _GLContextImpl);
+  var RenderPass = function (_GLBoostObject) {
+    babelHelpers.inherits(RenderPass, _GLBoostObject);
 
-    function GLContextWebGL2Impl(canvas, parent) {
-      babelHelpers.classCallCheck(this, GLContextWebGL2Impl);
+    function RenderPass(glBoostContext) {
+      babelHelpers.classCallCheck(this, RenderPass);
 
-      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(GLContextWebGL2Impl).call(this, canvas, parent));
+      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(RenderPass).call(this, glBoostContext));
 
-      babelHelpers.get(Object.getPrototypeOf(GLContextWebGL2Impl.prototype), 'init', _this).call(_this, 'webgl2', WebGL2RenderingContext);
+      _this._scene = null;
+      _this._meshes = [];
+      _this._opacityMeshes = [];
+      _this._transparentMeshes = [];
+      _this._drawBuffers = [_this._glContext.gl.BACK];
+      _this._clearColor = null;
+      _this._clearDepth = null; // default is 1.0
+      _this._renderTargetColorTextures = null;
+      _this._renderTargetDepthTexture = null;
+      _this._expression = null;
+      _this._fbo = null;
 
+      _this._customFunction = null;
       return _this;
     }
 
-    return GLContextWebGL2Impl;
-  }(GLContextImpl);
+    babelHelpers.createClass(RenderPass, [{
+      key: 'specifyRenderTargetTextures',
+      value: function specifyRenderTargetTextures(renderTargetTextures) {
+        var _this2 = this;
 
-  var GLContextWebGL1Impl = function (_GLContextImpl) {
-    babelHelpers.inherits(GLContextWebGL1Impl, _GLContextImpl);
+        var gl = this._glContext.gl;
 
-    function GLContextWebGL1Impl(canvas, parent) {
-      babelHelpers.classCallCheck(this, GLContextWebGL1Impl);
+        var colorRenderTargetTextures = renderTargetTextures.filter(function (renderTargetTexture) {
+          if (renderTargetTexture.colorAttachment) {
+            return true;
+          } else {
+            return false;
+          }
+        });
 
-      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(GLContextWebGL1Impl).call(this, canvas, parent));
+        if (colorRenderTargetTextures.length > 0) {
+          this._drawBuffers = [];
+          colorRenderTargetTextures.forEach(function (texture) {
+            var attachment = texture.colorAttachment;
+            _this2._drawBuffers.push(attachment);
+          });
+          this._renderTargetColorTextures = colorRenderTargetTextures;
+        } else {
+          this._drawBuffers = [gl.NONE];
+        }
 
-      babelHelpers.get(Object.getPrototypeOf(GLContextWebGL1Impl.prototype), 'init', _this).call(_this, 'webgl', WebGLRenderingContext);
+        var depthRenderTargetTextures = renderTargetTextures.filter(function (renderTargetTexture) {
+          if (renderTargetTexture.depthAttachment) {
+            return true;
+          } else {
+            return false;
+          }
+        });
 
+        this._renderTargetDepthTexture = depthRenderTargetTextures[0];
+      }
+    }, {
+      key: 'setClearColor',
+      value: function setClearColor(color) {
+        this._clearColor = color;
+      }
+    }, {
+      key: 'setClearDepth',
+      value: function setClearDepth(depth) {
+        this._clearDepth = depth;
+      }
+    }, {
+      key: 'prepareToRender',
+      value: function prepareToRender() {
+        var _this3 = this;
+
+        var collectMeshes = function collectMeshes(elem) {
+          if (elem instanceof M_Group) {
+            var children = elem.getChildren();
+            var meshes = [];
+            children.forEach(function (child) {
+              var childMeshes = collectMeshes(child);
+              meshes = meshes.concat(childMeshes);
+            });
+            return meshes;
+          } else if (elem instanceof M_Mesh) {
+            return [elem];
+          } else {
+            return [];
+          }
+        };
+
+        this._meshes = [];
+        if (this._scene) {
+          this._scene.getChildren().forEach(function (elm) {
+            _this3._meshes = _this3._meshes.concat(collectMeshes(elm));
+          });
+        }
+
+        this._opacityMeshes = [];
+        this._transparentMeshes = [];
+        this._meshes.forEach(function (mesh) {
+          if (mesh.isTransparent()) {
+            _this3._transparentMeshes.push(mesh);
+          } else {
+            _this3._opacityMeshes.push(mesh);
+          }
+        });
+
+        if (this._scene) {
+          this._scene.prepareToRender();
+        }
+
+        if (this._customFunction) {
+          this._customFunction();
+        }
+      }
+    }, {
+      key: 'sortTransparentMeshes',
+      value: function sortTransparentMeshes(camera) {
+
+        this._transparentMeshes.forEach(function (mesh) {
+          mesh.calcTransformedDepth(camera);
+        });
+
+        this._transparentMeshes.sort(function (a, b) {
+          if (a.transformedDepth < b.transformedDepth) return -1;
+          if (a.transformedDepth > b.transformedDepth) return 1;
+          return 0;
+        });
+      }
+    }, {
+      key: 'expression',
+      get: function get() {
+        return this._expression;
+      }
+    }, {
+      key: 'scene',
+      set: function set(scene) {
+        this._scene = scene;
+      },
+      get: function get() {
+        return this._scene;
+      }
+    }, {
+      key: 'meshes',
+      get: function get() {
+        return this._meshes;
+      }
+    }, {
+      key: 'opacityMeshes',
+      get: function get() {
+        return this._opacityMeshes;
+      }
+    }, {
+      key: 'transparentMeshes',
+      get: function get() {
+        return this._transparentMeshes;
+      }
+    }, {
+      key: 'buffersToDraw',
+      get: function get() {
+        return this._drawBuffers;
+      }
+    }, {
+      key: 'fbo',
+      get: function get() {
+        if (this._renderTargetColorTextures) {
+          return this._renderTargetColorTextures[0].fbo;
+        } else if (this._renderTargetDepthTexture) {
+          return this._renderTargetDepthTexture.fbo;
+        } else {
+          return null;
+        }
+      }
+    }, {
+      key: 'viewport',
+      get: function get() {
+        var texture = null;
+        if (this._renderTargetColorTextures) {
+          texture = this._renderTargetColorTextures[0];
+        } else if (this._renderTargetDepthTexture) {
+          texture = this._renderTargetDepthTexture;
+        }
+
+        return new Vector4(0, 0, texture.width, texture.height);
+      }
+    }, {
+      key: 'renderTargetColorTextures',
+      get: function get() {
+        return this._renderTargetColorTextures;
+      }
+    }, {
+      key: 'renderTargetDepthTexture',
+      get: function get() {
+        return this._renderTargetDepthTexture;
+      }
+    }, {
+      key: 'clearColor',
+      get: function get() {
+        return this._clearColor;
+      }
+    }, {
+      key: 'clearDepth',
+      get: function get() {
+        return this._clearDepth;
+      }
+
+      /**
+       * this function is called final part of prepareToRender
+       */
+
+    }, {
+      key: 'customFunction',
+      set: function set(func) {
+        this._customFunction = func;
+      },
+      get: function get() {
+        return this._customFunction;
+      }
+    }]);
+    return RenderPass;
+  }(GLBoostObject);
+
+  var Expression = function (_GLBoostObject) {
+    babelHelpers.inherits(Expression, _GLBoostObject);
+
+    function Expression(glBoostContext) {
+      babelHelpers.classCallCheck(this, Expression);
+
+      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Expression).call(this, glBoostContext));
+
+      _this._renderPasses = [];
       return _this;
     }
 
-    return GLContextWebGL1Impl;
-  }(GLContextImpl);
+    babelHelpers.createClass(Expression, [{
+      key: 'addRenderPasses',
+      value: function addRenderPasses(renderPasses) {
+        var _this2 = this;
+
+        renderPasses.forEach(function (renderPass) {
+          renderPass._expression = _this2;
+        });
+
+        this._renderPasses = this._renderPasses.concat(renderPasses);
+      }
+    }, {
+      key: 'addRenderPass',
+      value: function addRenderPass(renderPass) {
+        renderPath._expression = this;
+        this._renderPasses.push(renderPass);
+      }
+    }, {
+      key: 'clearRenderPasses',
+      value: function clearRenderPasses() {
+        this._renderPasses.forEach(function (renderPass) {
+          renderPass._expression = null;
+        });
+        this._renderPasses.length = 0;
+      }
+    }, {
+      key: 'prepareToRender',
+      value: function prepareToRender() {
+        this._renderPasses.forEach(function (renderPass) {
+          renderPass.prepareToRender();
+        });
+      }
+    }, {
+      key: 'renderPasses',
+      get: function get() {
+        return this._renderPasses;
+      }
+    }]);
+    return Expression;
+  }(GLBoostObject);
+
+  GLBoost$1['Expression'] = Expression;
 
   var GLExtensionsManager = function () {
     function GLExtensionsManager(glContext) {
@@ -2710,6 +4114,8 @@
         this._extTFA = gl.getExtension('EXT_texture_filter_anisotropic') || gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic') || gl.getExtension('MOZ_EXT_texture_filter_anisotropic');
 
         this._extEIUI = gl.getExtension('OES_element_index_uint');
+
+        this._extDepthTex = gl.getExtension('WEBGL_depth_texture');
       }
 
       GLExtensionsManager._instances[glContext.canvas.id] = this;
@@ -2749,6 +4155,11 @@
           this.extDBs.drawBuffersWEBGL(buffers);
           return true;
         } else {
+          if (buffers[0] === gl.NONE) {
+            gl.colorMask(false, false, false, false);
+          } else {
+            gl.colorMask(true, true, true, true);
+          }
           return false;
         }
       }
@@ -2802,334 +4213,6 @@
   GLExtensionsManager._instances = new Object();
 
   GLBoost$1['GLExtensionsManager'] = GLExtensionsManager;
-
-  var GLContext = function () {
-    function GLContext(canvas) {
-      babelHelpers.classCallCheck(this, GLContext);
-
-      if (GLContext._instances[canvas.id] instanceof GLContext) {
-        return GLContext._instances[canvas.id];
-      }
-
-      if (GLBoost.TARGET_WEBGL_VERSION === 1) {
-        this.impl = new GLContextWebGL1Impl(canvas, this);
-      } else if (GLBoost.TARGET_WEBGL_VERSION === 2) {
-        this.impl = new GLContextWebGL2Impl(canvas, this);
-      }
-
-      GLContext._instances[canvas.id] = this;
-      this._monitor = GLBoostMonitor.getInstance();
-    }
-
-    babelHelpers.createClass(GLContext, [{
-      key: 'createVertexArray',
-      value: function createVertexArray(glBoostObject) {
-        var gl = this.gl;
-        var glem = GLExtensionsManager.getInstance(this);
-        var glResource = glem.createVertexArray(gl);
-        this._monitor.registerWebGLResource(glBoostObject, glResource);
-        return glResource;
-      }
-    }, {
-      key: 'createBuffer',
-      value: function createBuffer(glBoostObject) {
-        var glResource = this.gl.createBuffer();
-        this._monitor.registerWebGLResource(glBoostObject, glResource);
-        return glResource;
-      }
-    }, {
-      key: 'createFramebuffer',
-      value: function createFramebuffer(glBoostObject) {
-        var glResource = this.gl.createFramebuffer();
-        this._monitor.registerWebGLResource(glBoostObject, glResource);
-        return glResource;
-      }
-    }, {
-      key: 'createRenderbuffer',
-      value: function createRenderbuffer(glBoostObject) {
-        var glResource = this.gl.createRenderbuffer();
-        this._monitor.registerWebGLResource(glBoostObject, glResource);
-        return glResource;
-      }
-    }, {
-      key: 'createShader',
-      value: function createShader(glBoostObject, shaderType) {
-        var glResource = this.gl.createShader(shaderType);
-        this._monitor.registerWebGLResource(glBoostObject, glResource);
-        return glResource;
-      }
-    }, {
-      key: 'deleteShader',
-      value: function deleteShader(glBoostObject, shader) {
-        this._monitor.deregisterWebGLResource(glBoostObject, shader);
-        this.gl.deleteShader(shader);
-        shader = null;
-      }
-    }, {
-      key: 'createProgram',
-      value: function createProgram(glBoostObject) {
-        var glResource = this.gl.createProgram();
-        this._monitor.registerWebGLResource(glBoostObject, glResource);
-        return glResource;
-      }
-    }, {
-      key: 'deleteProgram',
-      value: function deleteProgram(glBoostObject, program) {
-        this._monitor.deregisterWebGLResource(glBoostObject, program);
-        this.gl.deleteProgram(program);
-      }
-    }, {
-      key: 'createTexture',
-      value: function createTexture(glBoostObject) {
-        var glResource = this.gl.createTexture();
-        this._monitor.registerWebGLResource(glBoostObject, glResource);
-        return glResource;
-      }
-    }, {
-      key: 'gl',
-      get: function get() {
-        return this.impl.gl;
-      }
-    }, {
-      key: 'canvas',
-      get: function get() {
-        return this.impl.canvas;
-      }
-    }], [{
-      key: 'getInstance',
-      value: function getInstance(canvas) {
-        if (typeof canvas === 'string') {
-          canvas = window.document.querySelector(canvas);
-        }
-        return new GLContext(canvas);
-      }
-    }]);
-    return GLContext;
-  }();
-
-  GLContext._instances = new Object();
-
-  var RenderPath = function (_GLBoostObject) {
-    babelHelpers.inherits(RenderPath, _GLBoostObject);
-
-    function RenderPath(glBoostContext) {
-      babelHelpers.classCallCheck(this, RenderPath);
-
-      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(RenderPath).call(this, glBoostContext));
-
-      _this._expression = null;
-      _this._scene = null;
-      //this._elements = [];
-      _this._meshes = [];
-      _this._opacityMeshes = [];
-      _this._transparentMeshes = [];
-      _this._drawBuffers = [_this._glContext.gl.BACK];
-      _this._clearColor = null;
-      _this._clearDepth = 1.0;
-      _this._renderTargetTextures = null;
-      return _this;
-    }
-
-    babelHelpers.createClass(RenderPath, [{
-      key: 'specifyRenderTargetTextures',
-      value: function specifyRenderTargetTextures(renderTargetTextures) {
-        var _this2 = this;
-
-        var gl = this._glContext.gl;
-
-        if (renderTargetTextures) {
-          this._drawBuffers = [];
-          renderTargetTextures.forEach(function (texture) {
-            _this2._drawBuffers.push(texture.colorAttachiment);
-          });
-          this._renderTargetTextures = renderTargetTextures;
-        } else {
-          this._drawBuffers = [gl.BACK];
-        }
-      }
-    }, {
-      key: 'setClearColor',
-      value: function setClearColor(color) {
-        this._clearColor = color;
-      }
-    }, {
-      key: 'setClearDepth',
-      value: function setClearDepth(depth) {
-        this._clearDepth = depth;
-      }
-    }, {
-      key: 'prepareToRender',
-      value: function prepareToRender() {
-        var _this3 = this;
-
-        var collectMeshes = function collectMeshes(elem) {
-          if (elem instanceof Group) {
-            var children = elem.getChildren();
-            var meshes = [];
-            children.forEach(function (child) {
-              var childMeshes = collectMeshes(child);
-              meshes = meshes.concat(childMeshes);
-            });
-            return meshes;
-          } else if (elem instanceof Mesh) {
-            return [elem];
-          } else {
-            return [];
-          }
-        };
-
-        this._meshes = [];
-        if (this._scene) {
-          this._scene.getChildren().forEach(function (elm) {
-            _this3._meshes = _this3._meshes.concat(collectMeshes(elm));
-          });
-        }
-
-        this._opacityMeshes = [];
-        this._transparentMeshes = [];
-        this._meshes.forEach(function (mesh) {
-          if (mesh.isTransparent()) {
-            _this3._transparentMeshes.push(mesh);
-          } else {
-            _this3._opacityMeshes.push(mesh);
-          }
-        });
-
-        if (this._scene) {
-          this._scene.prepareToRender();
-        }
-      }
-    }, {
-      key: 'sortTransparentMeshes',
-      value: function sortTransparentMeshes(camera) {
-
-        this._transparentMeshes.forEach(function (mesh) {
-          mesh.calcTransformedDepth(camera);
-        });
-
-        this._transparentMeshes.sort(function (a, b) {
-          if (a.transformedDepth < b.transformedDepth) return -1;
-          if (a.transformedDepth > b.transformedDepth) return 1;
-          return 0;
-        });
-      }
-    }, {
-      key: 'expression',
-      get: function get() {
-        return this._expression;
-      }
-    }, {
-      key: 'scene',
-      set: function set(scene) {
-        this._scene = scene;
-      },
-      get: function get() {
-        return this._scene;
-      }
-    }, {
-      key: 'meshes',
-      get: function get() {
-        return this._meshes;
-      }
-    }, {
-      key: 'opacityMeshes',
-      get: function get() {
-        return this._opacityMeshes;
-      }
-    }, {
-      key: 'transparentMeshes',
-      get: function get() {
-        return this._transparentMeshes;
-      }
-    }, {
-      key: 'buffersToDraw',
-      get: function get() {
-        return this._drawBuffers;
-      }
-    }, {
-      key: 'fboOfRenderTargetTextures',
-      get: function get() {
-        if (this._renderTargetTextures) {
-          return this._renderTargetTextures[0].fbo;
-        } else {
-          return null;
-        }
-      }
-    }, {
-      key: 'renderTargetTextures',
-      get: function get() {
-        return this._renderTargetTextures;
-      }
-    }, {
-      key: 'clearColor',
-      get: function get() {
-        return this._clearColor;
-      }
-    }, {
-      key: 'clearDepth',
-      get: function get() {
-        return this._clearDepth;
-      }
-    }]);
-    return RenderPath;
-  }(GLBoostObject);
-
-  GLBoost$1['RenderPath'] = RenderPath;
-
-  var Expression = function (_GLBoostObject) {
-    babelHelpers.inherits(Expression, _GLBoostObject);
-
-    function Expression(glBoostContext) {
-      babelHelpers.classCallCheck(this, Expression);
-
-      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Expression).call(this, glBoostContext));
-
-      _this._renderPaths = [];
-      return _this;
-    }
-
-    babelHelpers.createClass(Expression, [{
-      key: 'addRenderPaths',
-      value: function addRenderPaths(renderPaths) {
-        var _this2 = this;
-
-        renderPaths.forEach(function (renderPath) {
-          renderPath._expression = _this2;
-        });
-
-        this._renderPaths = this._renderPaths.concat(renderPaths);
-      }
-    }, {
-      key: 'addRenderPath',
-      value: function addRenderPath(renderPath) {
-        renderPath._expression = this;
-        this._renderPaths.push(renderPath);
-      }
-    }, {
-      key: 'clearRenderPaths',
-      value: function clearRenderPaths() {
-        this._renderPaths.forEach(function (renderPath) {
-          renderPath._expression = null;
-        });
-        this._renderPaths.length = 0;
-      }
-    }, {
-      key: 'prepareToRender',
-      value: function prepareToRender() {
-        this._renderPaths.forEach(function (renderPath) {
-          renderPath.prepareToRender();
-        });
-      }
-    }, {
-      key: 'renderPaths',
-      get: function get() {
-        return this._renderPaths;
-      }
-    }]);
-    return Expression;
-  }(GLBoostObject);
-
-  GLBoost$1['Expression'] = Expression;
 
   var Hash = function () {
     function Hash() {
@@ -3194,7 +4277,7 @@
       }
     }, {
       key: '_getVertexShaderString',
-      value: function _getVertexShaderString(gl, functions, existCamera_f, lights, extraData) {
+      value: function _getVertexShaderString(gl, functions, existCamera_f, lights, material, extraData) {
         var _this2 = this;
 
         var f = functions;
@@ -3209,13 +4292,15 @@
         /// define variables
         // start defining variables. first, sub class Shader, ...
         // seconds, define variables as mixin shaders
+        var vsDefineShaderText = '';
         this._classNamesOfVSDefine.forEach(function (className) {
           var method = _this2['VSDefine_' + className];
           if (method) {
-            shaderText += '//                                                            VSDefine_' + className + ' //\n';
-            shaderText += method.bind(_this2, in_, out_, f, lights, extraData)();
+            vsDefineShaderText += '//                                                            VSDefine_' + className + ' //\n';
+            vsDefineShaderText += method.bind(_this2, in_, out_, f, lights, material, extraData)();
           }
         });
+        shaderText += this._removeDuplicatedLine(vsDefineShaderText);
 
         // begin of main function
         shaderText += 'void main(void) {\n';
@@ -3227,7 +4312,7 @@
           var method = _this2['VSTransform_' + className];
           if (method) {
             shaderText += '//                                                            VSTransform_' + className + ' //\n';
-            shaderText += method.bind(_this2, existCamera_f, f, lights, extraData)();
+            shaderText += method.bind(_this2, existCamera_f, f, lights, material, extraData)();
           }
         });
 
@@ -3238,20 +4323,18 @@
           var method = _this2['VSShade_' + className];
           if (method) {
             shaderText += '//                                                            VSShade_' + className + ' //\n';
-            shaderText += method.bind(_this2, existCamera_f, f, lights, extraData)();
+            shaderText += method.bind(_this2, existCamera_f, f, lights, material, extraData)();
           }
         });
 
         // end of main function
         shaderText += '}\n';
 
-        shaderText = this._removeDuplicatedLine(shaderText);
-
         return shaderText;
       }
     }, {
       key: '_getFragmentShaderString',
-      value: function _getFragmentShaderString(gl, functions, lights, extraData) {
+      value: function _getFragmentShaderString(gl, functions, lights, material, extraData) {
         var _this3 = this;
 
         var f = functions;
@@ -3273,13 +4356,15 @@
         /// define variables
         // start defining variables. first, sub class Shader, ...
         // seconds, define variables as mixin shaders
+        var fsDefineShaderText = '';
         this._classNamesOfFSDefine.forEach(function (className) {
           var method = _this3['FSDefine_' + className];
           if (method) {
-            shaderText += '//                                                            FSDefine_' + className + ' //\n';
-            shaderText += method.bind(_this3, in_, f, lights, extraData)();
+            fsDefineShaderText += '//                                                            FSDefine_' + className + ' //\n';
+            fsDefineShaderText += method.bind(_this3, in_, f, lights, material, extraData)();
           }
         });
+        shaderText += this._removeDuplicatedLine(fsDefineShaderText);
 
         // begin of main function
         shaderText += 'void main(void) {\n';
@@ -3291,7 +4376,7 @@
           var method = _this3['FSShade_' + className];
           if (method) {
             shaderText += '//                                                            FSShade_' + className + ' //\n';
-            shaderText += method.bind(_this3, f, gl, lights, extraData)();
+            shaderText += method.bind(_this3, f, gl, lights, material, extraData)();
           }
         });
 
@@ -3305,13 +4390,11 @@
         }
         shaderText += '}\n';
 
-        shaderText = this._removeDuplicatedLine(shaderText);
-
         return shaderText;
       }
     }, {
       key: '_prepareAssetsForShaders',
-      value: function _prepareAssetsForShaders(gl, shaderProgram, vertexAttribs, existCamera_f, lights, extraData, canvas) {
+      value: function _prepareAssetsForShaders(gl, shaderProgram, vertexAttribs, existCamera_f, lights, material, extraData, canvas) {
         var _this4 = this;
 
         var vertexAttribsAsResult = [];
@@ -3320,7 +4403,7 @@
         this._classNamesOfPrepare.forEach(function (className) {
           var method = _this4['prepare_' + className];
           if (method) {
-            var verAttirbs = method.bind(_this4, gl, shaderProgram, vertexAttribs, existCamera_f, lights, extraData, canvas)();
+            var verAttirbs = method.bind(_this4, gl, shaderProgram, vertexAttribs, existCamera_f, lights, material, extraData, canvas)();
             vertexAttribsAsResult = vertexAttribsAsResult.concat(verAttirbs);
           }
         });
@@ -3387,16 +4470,16 @@
       }
     }, {
       key: 'getShaderProgram',
-      value: function getShaderProgram(vertexAttribs, existCamera_f, lights) {
-        var extraData = arguments.length <= 3 || arguments[3] === undefined ? {} : arguments[3];
+      value: function getShaderProgram(vertexAttribs, existCamera_f, lights, material) {
+        var extraData = arguments.length <= 4 || arguments[4] === undefined ? {} : arguments[4];
 
         var gl = this._glContext.gl;
         var canvas = this._glContext.canvas;
 
         lights = this.getDefaultPointLightIfNotExist(gl, lights, canvas);
 
-        var vertexShaderText = this._getVertexShaderString(gl, vertexAttribs, existCamera_f, lights, extraData);
-        var fragmentShaderText = this._getFragmentShaderString(gl, vertexAttribs, lights, extraData);
+        var vertexShaderText = this._getVertexShaderString(gl, vertexAttribs, existCamera_f, lights, material, extraData);
+        var fragmentShaderText = this._getFragmentShaderString(gl, vertexAttribs, lights, material, extraData);
 
         // lookup shaderHashTable
         var baseText = vertexShaderText + '\n###SPLIT###\n' + fragmentShaderText;
@@ -3437,7 +4520,7 @@
           //gl.useProgram(programToReturn);
         }
         this._glslProgram = programToReturn;
-        programToReturn.optimizedVertexAttribs = this._prepareAssetsForShaders(gl, programToReturn, vertexAttribs, existCamera_f, lights, extraData, canvas);
+        programToReturn.optimizedVertexAttribs = this._prepareAssetsForShaders(gl, programToReturn, vertexAttribs, existCamera_f, lights, material, extraData, canvas);
 
         return programToReturn;
       }
@@ -3469,6 +4552,12 @@
         } else {
           return 1;
         }
+      }
+    }, {
+      key: '_sampler2DShadow_func',
+      value: function _sampler2DShadow_func() {
+        var gl = this._glContext.gl;
+        return GLBoost.isThisGLVersion_2(gl) ? 'sampler2DShadow' : 'sampler2D';
       }
     }, {
       key: 'readyForDiscard',
@@ -3641,6 +4730,11 @@
         return GLBoost.isThisGLVersion_2(gl) ? 'texture' : 'texture2D';
       }
     }, {
+      key: '_textureProj_func',
+      value: function _textureProj_func(gl) {
+        return GLBoost.isThisGLVersion_2(gl) ? 'textureProj' : 'texture2DProj';
+      }
+    }, {
       key: '_set_outColor_onFrag',
       value: function _set_outColor_onFrag(gl, i) {
         return GLBoost.isThisGLVersion_2(gl) ? 'layout(location = ' + i + ') out vec4 rt' + i + ';\n' : 'vec4 rt' + i + ';\n';
@@ -3699,35 +4793,36 @@
       }
     }, {
       key: 'FSDefine_VertexLocalShaderSource',
-      value: function FSDefine_VertexLocalShaderSource(in_, f, lights, extraData) {
+      value: function FSDefine_VertexLocalShaderSource(in_, f, lights, material, extraData) {
         var shaderText = '';
-        if (Shader._exist(f, GLBoost.NORMAL)) {
-          shaderText += in_ + ' vec3 v_normal;\n';
-        }
-        shaderText += in_ + ' vec4 position;\n';
         if (lights.length > 0) {
           shaderText += 'uniform vec4 lightPosition[' + lights.length + '];\n';
           shaderText += 'uniform vec4 lightDiffuse[' + lights.length + '];\n';
         }
+        if (Shader._exist(f, GLBoost.NORMAL)) {
+          shaderText += in_ + ' vec3 v_normal;\n';
+        }
+        shaderText += in_ + ' vec4 position;\n';
 
         return shaderText;
       }
     }, {
       key: 'prepare_VertexLocalShaderSource',
-      value: function prepare_VertexLocalShaderSource(gl, shaderProgram, vertexAttribs, existCamera_f, lights, extraData, canvas) {
+      value: function prepare_VertexLocalShaderSource(gl, shaderProgram, vertexAttribs, existCamera_f, lights, material, extraData, canvas) {
 
         var vertexAttribsAsResult = [];
 
-        var attribName = 'position';
-        shaderProgram['vertexAttribute_' + attribName] = gl.getAttribLocation(shaderProgram, 'aVertex_' + attribName);
-        gl.enableVertexAttribArray(shaderProgram['vertexAttribute_' + attribName]);
-        vertexAttribsAsResult.push(attribName);
+        vertexAttribs.forEach(function (attribName) {
+          if (attribName === GLBoost.POSITION || attribName === GLBoost.NORMAL) {
+            shaderProgram['vertexAttribute_' + attribName] = gl.getAttribLocation(shaderProgram, 'aVertex_' + attribName);
+            gl.enableVertexAttribArray(shaderProgram['vertexAttribute_' + attribName]);
+            vertexAttribsAsResult.push(attribName);
+          }
+        });
 
         if (existCamera_f) {
           shaderProgram.modelViewProjectionMatrix = gl.getUniformLocation(shaderProgram, 'modelViewProjectionMatrix');
         }
-
-        lights = this.getDefaultPointLightIfNotExist(gl, lights, canvas);
 
         for (var i = 0; i < lights.length; i++) {
           shaderProgram['lightPosition_' + i] = gl.getUniformLocation(shaderProgram, 'lightPosition[' + i + ']');
@@ -3742,125 +4837,14 @@
 
   GLBoost['VertexLocalShaderSource'] = VertexLocalShaderSource;
 
-  /**
-   * [en] This is the abstract class for all lights classes. Don't use this class directly.<br>
-   * [ja] 全ての光源クラスのための抽象クラスです。直接このクラスは使わないでください。
-   */
-
-  var AbstractLight = function (_Element) {
-    babelHelpers.inherits(AbstractLight, _Element);
-
-    function AbstractLight(glBoostContext) {
-      babelHelpers.classCallCheck(this, AbstractLight);
-
-      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(AbstractLight).call(this, glBoostContext));
-
-      if (_this.constructor === AbstractLight) {
-        throw new TypeError("Cannot construct AbstractLight instances directly.");
-      }
-
-      _this._gl = _this._glContext.gl;
-      _this._name = "";
-      return _this;
-    }
-
-    return AbstractLight;
-  }(Element);
-
-  /**
-   * [en] This is a Directional Light class.<br>
-   * [ja] 平行光源クラスです。
-   */
-
-  var DirectionalLight = function (_AbstractLight) {
-    babelHelpers.inherits(DirectionalLight, _AbstractLight);
-
-
-    /**
-     * [en] The constructor of DirectionalLight class. <br>
-     * [ja] DirectionalLightクラスのコンストラクタ
-     * @param {Vector4} intensity [en] intensity as Vector4 Color [ja] Vector4による色情報で指定する光の強度
-     * @param {Vector4} direction [en] the light (traveling) direction [ja] 光が向かう方向
-     */
-
-    function DirectionalLight(glBoostContext, intensity, direction) {
-      babelHelpers.classCallCheck(this, DirectionalLight);
-
-      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(DirectionalLight).call(this, glBoostContext));
-
-      _this._name = "";
-      _this._intensity = intensity;
-      _this._direction = direction;
-      return _this;
-    }
-
-    babelHelpers.createClass(DirectionalLight, [{
-      key: 'intensity',
-      set: function set(vec) {
-        this._intensity = vec;
-      },
-      get: function get() {
-        return this._intensity;
-      }
-    }, {
-      key: 'direction',
-      set: function set(vec) {
-        this._direction = vec;
-      },
-      get: function get() {
-        return this._direction;
-      }
-    }]);
-    return DirectionalLight;
-  }(AbstractLight);
-
-  /**
-   * [en] This is a Point Light class.<br>
-   * [ja] 点光源クラスです。
-   */
-
-  var PointLight = function (_AbstractLight) {
-    babelHelpers.inherits(PointLight, _AbstractLight);
-
-
-    /**
-     * [en] The constructor of PointLight class. <br>
-     * [ja] PointLightクラスのコンストラクタ
-     * @param {Vector4} intensity [en] intensity as Vector4 Color [ja] Vector4による色情報で指定する光の強度
-     * @param {HTMLCanvas|string} canvas [en] canvas or canvas' id string. [ja] canvasまたはcanvasのid文字列
-     */
-
-    function PointLight(glBoostContext, intensity) {
-      babelHelpers.classCallCheck(this, PointLight);
-
-      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(PointLight).call(this, glBoostContext));
-
-      _this._name = "";
-      _this._intensity = intensity;
-
-      return _this;
-    }
-
-    babelHelpers.createClass(PointLight, [{
-      key: 'intensity',
-      set: function set(vec) {
-        this._intensity = vec;
-      },
-      get: function get() {
-        return this._intensity;
-      }
-    }]);
-    return PointLight;
-  }(AbstractLight);
-
-  var singleton$3 = Symbol();
-  var singletonEnforcer$3 = Symbol();
+  var singleton$2 = Symbol();
+  var singletonEnforcer$2 = Symbol();
 
   var DrawKickerLocal = function () {
     function DrawKickerLocal(enforcer) {
       babelHelpers.classCallCheck(this, DrawKickerLocal);
 
-      if (enforcer !== singletonEnforcer$3) {
+      if (enforcer !== singletonEnforcer$2) {
         throw new Error('This is a Singleton class. get the instance using \'getInstance\' static method.');
       }
       this._glslProgram = null;
@@ -3868,15 +4852,15 @@
 
     babelHelpers.createClass(DrawKickerLocal, [{
       key: 'draw',
-      value: function draw(gl, glem, glContext, mesh, materials, camera, lights, scene, vertices, vaoDic, vboDic, iboArrayDic, geometry, geometryName, primitiveType, vertexN) {
+      value: function draw(gl, glem, glContext, mesh, materials, camera, lights, scene, vertices, vaoDic, vboDic, iboArrayDic, geometry, geometryName, primitiveType, vertexN, renderPassIndex) {
         var isVAOBound = false;
         if (DrawKickerLocal._lastGeometry !== geometryName) {
           isVAOBound = glem.bindVertexArray(gl, vaoDic[geometryName]);
         }
 
         for (var i = 0; i < materials.length; i++) {
-          var shaderName = materials[i].shaderInstance.toString();
-          if (shaderName !== DrawKickerLocal._lastShaderName) {
+          var materialUpdateStateString = materials[i].getUpdateStateString();
+          if (materialUpdateStateString !== DrawKickerLocal._lastMaterialUpdateStateString) {
             this._glslProgram = materials[i].shaderInstance.glslProgram;
             gl.useProgram(this._glslProgram);
           }
@@ -3894,7 +4878,7 @@
 
           if (camera) {
             var viewMatrix = camera.lookAtRHMatrix();
-            var projectionMatrix = camera.perspectiveRHMatrix();
+            var projectionMatrix = camera.projectionRHMatrix();
             var m_m = mesh.transformMatrixAccumulatedAncestry;
             var pvm_m = projectionMatrix.multiply(viewMatrix).multiply(camera.inverseTransformMatrixAccumulatedAncestryWithoutMySelf).multiply(m_m);
             gl.uniformMatrix4fv(glslProgram.modelViewProjectionMatrix, false, pvm_m.flatten());
@@ -3918,11 +4902,11 @@
               if (glslProgram['lightPosition_' + j] && glslProgram['lightDiffuse_' + j]) {
                 var lightVec = null;
                 var isPointLight = -9999;
-                if (lights[j] instanceof PointLight) {
+                if (lights[j] instanceof M_PointLight) {
                   lightVec = new Vector4(0, 0, 0, 1);
                   lightVec = lights[j].transformMatrixAccumulatedAncestry.multiplyVector(lightVec);
                   isPointLight = 1.0;
-                } else if (lights[j] instanceof DirectionalLight) {
+                } else if (lights[j] instanceof M_DirectionalLight) {
                   lightVec = new Vector4(-lights[j].direction.x, -lights[j].direction.y, -lights[j].direction.z, 1);
                   lightVec = lights[j].rotateMatrixAccumulatedAncestry.multiplyVector(lightVec);
                   lightVec.w = 0.0;
@@ -3939,12 +4923,12 @@
 
           var isMaterialSetupDone = true;
 
-          if (materials[i].shaderInstance.dirty || shaderName !== DrawKickerLocal._lastShaderName) {
+          if (materials[i].shaderInstance.dirty || materialUpdateStateString !== DrawKickerLocal._lastMaterialUpdateStateString) {
             var needTobeStillDirty = materials[i].shaderInstance.setUniforms(gl, glslProgram, materials[i], camera, mesh);
             materials[i].shaderInstance.dirty = needTobeStillDirty ? true : false;
           }
 
-          if (shaderName !== DrawKickerLocal._lastShaderName) {
+          if (materialUpdateStateString !== DrawKickerLocal._lastMaterialUpdateStateString || DrawKickerLocal._lastRenderPassIndex !== renderPassIndex) {
             if (materials[i]) {
               isMaterialSetupDone = materials[i].setUp();
             }
@@ -3961,27 +4945,29 @@
             gl.drawArrays(gl[primitiveType], 0, vertexN);
           }
 
-          DrawKickerLocal._lastShaderName = isMaterialSetupDone ? shaderName : null;
+          DrawKickerLocal._lastMaterialUpdateStateString = isMaterialSetupDone ? materialUpdateStateString : null;
         }
 
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
         DrawKickerLocal._lastGeometry = geometryName;
+        DrawKickerLocal._lastRenderPassIndex = renderPassIndex;
       }
     }], [{
       key: 'getInstance',
       value: function getInstance() {
-        if (!this[singleton$3]) {
-          this[singleton$3] = new DrawKickerLocal(singletonEnforcer$3);
+        if (!this[singleton$2]) {
+          this[singleton$2] = new DrawKickerLocal(singletonEnforcer$2);
         }
-        return this[singleton$3];
+        return this[singleton$2];
       }
     }]);
     return DrawKickerLocal;
   }();
 
-  DrawKickerLocal._lastShaderName = null;
+  DrawKickerLocal._lastMaterialUpdateStateString = null;
   DrawKickerLocal._lastGeometry = null;
+  DrawKickerLocal._lastRenderPassIndex = -1;
 
   var VertexWorldShaderSource = function () {
     function VertexWorldShaderSource() {
@@ -3990,7 +4976,7 @@
 
     babelHelpers.createClass(VertexWorldShaderSource, [{
       key: 'VSDefine_VertexWorldShaderSource',
-      value: function VSDefine_VertexWorldShaderSource(in_, out_, f, lights, extraData) {
+      value: function VSDefine_VertexWorldShaderSource(in_, out_, f, lights, material, extraData) {
         var shaderText = in_ + ' vec3 aVertex_position;\n';
 
         if (Shader._exist(f, GLBoost.NORMAL)) {
@@ -4007,7 +4993,7 @@
       }
     }, {
       key: 'VSTransform_VertexWorldShaderSource',
-      value: function VSTransform_VertexWorldShaderSource(existCamera_f, f, lights, extraData) {
+      value: function VSTransform_VertexWorldShaderSource(existCamera_f, f, lights, material, extraData) {
         var shaderText = '';
         if (existCamera_f) {
           shaderText += '  mat4 pvwMatrix = projectionMatrix * viewMatrix * worldMatrix;\n';
@@ -4024,16 +5010,18 @@
       }
     }, {
       key: 'FSDefine_VertexWorldShaderSource',
-      value: function FSDefine_VertexWorldShaderSource(in_, f, lights, extraData) {
+      value: function FSDefine_VertexWorldShaderSource(in_, f, lights, material, extraData) {
         var shaderText = '';
-        if (Shader._exist(f, GLBoost.NORMAL)) {
-          shaderText += in_ + ' vec3 v_normal;\n';
-        }
-        shaderText += in_ + ' vec4 position;\n';
+
         if (lights.length > 0) {
           shaderText += 'uniform vec4 lightPosition[' + lights.length + '];\n';
           shaderText += 'uniform vec4 lightDiffuse[' + lights.length + '];\n';
         }
+
+        if (Shader._exist(f, GLBoost.NORMAL)) {
+          shaderText += in_ + ' vec3 v_normal;\n';
+        }
+        shaderText += in_ + ' vec4 position;\n';
 
         return shaderText;
       }
@@ -4045,14 +5033,17 @@
       }
     }, {
       key: 'prepare_VertexWorldShaderSource',
-      value: function prepare_VertexWorldShaderSource(gl, shaderProgram, vertexAttribs, existCamera_f, lights, extraData, canvas) {
+      value: function prepare_VertexWorldShaderSource(gl, shaderProgram, vertexAttribs, existCamera_f, lights, material, extraData, canvas) {
 
         var vertexAttribsAsResult = [];
 
-        var attribName = 'position';
-        shaderProgram['vertexAttribute_' + attribName] = gl.getAttribLocation(shaderProgram, 'aVertex_' + attribName);
-        gl.enableVertexAttribArray(shaderProgram['vertexAttribute_' + attribName]);
-        vertexAttribsAsResult.push(attribName);
+        vertexAttribs.forEach(function (attribName) {
+          if (attribName === GLBoost.POSITION || attribName === GLBoost.NORMAL) {
+            shaderProgram['vertexAttribute_' + attribName] = gl.getAttribLocation(shaderProgram, 'aVertex_' + attribName);
+            gl.enableVertexAttribArray(shaderProgram['vertexAttribute_' + attribName]);
+            vertexAttribsAsResult.push(attribName);
+          }
+        });
 
         shaderProgram.worldMatrix = gl.getUniformLocation(shaderProgram, 'worldMatrix');
         shaderProgram.normalMatrix = gl.getUniformLocation(shaderProgram, 'normalMatrix');
@@ -4060,8 +5051,6 @@
           shaderProgram.viewMatrix = gl.getUniformLocation(shaderProgram, 'viewMatrix');
           shaderProgram.projectionMatrix = gl.getUniformLocation(shaderProgram, 'projectionMatrix');
         }
-
-        lights = this.getDefaultPointLightIfNotExist(gl, lights, canvas);
 
         for (var i = 0; i < lights.length; i++) {
           shaderProgram['lightPosition_' + i] = gl.getUniformLocation(shaderProgram, 'lightPosition[' + i + ']');
@@ -4076,14 +5065,14 @@
 
   GLBoost['VertexWorldShaderSource'] = VertexWorldShaderSource;
 
-  var singleton$4 = Symbol();
-  var singletonEnforcer$4 = Symbol();
+  var singleton$3 = Symbol();
+  var singletonEnforcer$3 = Symbol();
 
   var DrawKickerWorld = function () {
     function DrawKickerWorld(enforcer) {
       babelHelpers.classCallCheck(this, DrawKickerWorld);
 
-      if (enforcer !== singletonEnforcer$4) {
+      if (enforcer !== singletonEnforcer$3) {
         throw new Error('This is a Singleton class. get the instance using \'getInstance\' static method.');
       }
       this._glslProgram = null;
@@ -4091,15 +5080,15 @@
 
     babelHelpers.createClass(DrawKickerWorld, [{
       key: 'draw',
-      value: function draw(gl, glem, glContext, mesh, materials, camera, lights, scene, vertices, vaoDic, vboDic, iboArrayDic, geometry, geometryName, primitiveType, vertexN) {
+      value: function draw(gl, glem, glContext, mesh, materials, camera, lights, scene, vertices, vaoDic, vboDic, iboArrayDic, geometry, geometryName, primitiveType, vertexN, renderPassIndex) {
         var isVAOBound = false;
         if (DrawKickerWorld._lastGeometry !== geometryName) {
           isVAOBound = glem.bindVertexArray(gl, vaoDic[geometryName]);
         }
 
         for (var i = 0; i < materials.length; i++) {
-          var shaderName = materials[i].shaderInstance.toString();
-          if (shaderName !== DrawKickerWorld._lastShaderName) {
+          var materialUpdateStateString = materials[i].getUpdateStateString();
+          if (materialUpdateStateString !== DrawKickerWorld._lastMaterialUpdateStateString) {
             this._glslProgram = materials[i].shaderInstance.glslProgram;
             gl.useProgram(this._glslProgram);
           }
@@ -4122,7 +5111,7 @@
           if (camera) {
             var cameraMatrix = camera.lookAtRHMatrix();
             var viewMatrix = cameraMatrix.multiply(camera.inverseTransformMatrixAccumulatedAncestryWithoutMySelf);
-            var projectionMatrix = camera.perspectiveRHMatrix();
+            var projectionMatrix = camera.projectionRHMatrix();
             gl.uniformMatrix4fv(glslProgram.viewMatrix, false, viewMatrix.flatten());
             gl.uniformMatrix4fv(glslProgram.projectionMatrix, false, projectionMatrix.flatten());
           }
@@ -4141,11 +5130,11 @@
               if (glslProgram['lightPosition_' + j] && glslProgram['lightDiffuse_' + j]) {
                 var lightVec = null;
                 var isPointLight = -9999;
-                if (lights[j] instanceof PointLight) {
+                if (lights[j] instanceof M_PointLight) {
                   lightVec = new Vector4(0, 0, 0, 1);
                   lightVec = lights[j].transformMatrixAccumulatedAncestry.multiplyVector(lightVec);
                   isPointLight = 1.0;
-                } else if (lights[j] instanceof DirectionalLight) {
+                } else if (lights[j] instanceof M_DirectionalLight) {
                   lightVec = new Vector4(-lights[j].direction.x, -lights[j].direction.y, -lights[j].direction.z, 1);
                   lightVec = lights[j].rotateMatrixAccumulatedAncestry.multiplyVector(lightVec);
                   lightVec.w = 0.0;
@@ -4160,19 +5149,22 @@
 
           var isMaterialSetupDone = true;
 
-          if (materials[i].shaderInstance.dirty || shaderName !== DrawKickerWorld._lastShaderName) {
-            var needTobeStillDirty = materials[i].shaderInstance.setUniforms(gl, glslProgram, materials[i], camera, mesh);
+          if (materials[i].shaderInstance.dirty || materialUpdateStateString !== DrawKickerWorld._lastMaterialUpdateStateString) {
+            var needTobeStillDirty = materials[i].shaderInstance.setUniforms(gl, glslProgram, materials[i], camera, mesh, lights);
             materials[i].shaderInstance.dirty = needTobeStillDirty ? true : false;
           }
 
-          if (shaderName !== DrawKickerWorld._lastShaderName) {
+          if (materialUpdateStateString !== DrawKickerWorld._lastMaterialUpdateStateString || DrawKickerWorld._lastRenderPassIndex !== renderPassIndex) {
             if (materials[i]) {
               isMaterialSetupDone = materials[i].setUp();
             }
           }
+
           if (!isMaterialSetupDone) {
             return;
           }
+
+          this._setupOtherTextures(lights);
 
           if (iboArrayDic[geometryName].length > 0) {
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iboArrayDic[geometryName][i]);
@@ -4182,27 +5174,49 @@
             gl.drawArrays(gl[primitiveType], 0, vertexN);
           }
 
-          DrawKickerWorld._lastShaderName = isMaterialSetupDone ? shaderName : null;
+          this._tearDownOtherTextures(lights);
+
+          DrawKickerWorld._lastMaterialUpdateStateString = isMaterialSetupDone ? materialUpdateStateString : null;
         }
 
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
+        DrawKickerWorld._lastRenderPassIndex = renderPassIndex;
         DrawKickerWorld._lastGeometry = geometryName;
+      }
+    }, {
+      key: '_setupOtherTextures',
+      value: function _setupOtherTextures(lights) {
+        for (var i = 0; i < lights.length; i++) {
+          if (lights[i].camera && lights[i].camera.texture) {
+            lights[i].camera.texture.setUp();
+          }
+        }
+      }
+    }, {
+      key: '_tearDownOtherTextures',
+      value: function _tearDownOtherTextures(lights) {
+        for (var i = 0; i < lights.length; i++) {
+          if (lights[i].camera && lights[i].camera.texture) {
+            lights[i].camera.texture.tearDown();
+          }
+        }
       }
     }], [{
       key: 'getInstance',
       value: function getInstance() {
-        if (!this[singleton$4]) {
-          this[singleton$4] = new DrawKickerWorld(singletonEnforcer$4);
+        if (!this[singleton$3]) {
+          this[singleton$3] = new DrawKickerWorld(singletonEnforcer$3);
         }
-        return this[singleton$4];
+        return this[singleton$3];
       }
     }]);
     return DrawKickerWorld;
   }();
 
-  DrawKickerWorld._lastShaderName = null;
+  DrawKickerWorld._lastMaterialUpdateStateString = null;
   DrawKickerWorld._lastGeometry = null;
+  DrawKickerWorld._lastRenderPassIndex = -1;
 
   var ArrayUtil = function () {
     function ArrayUtil() {
@@ -4234,6 +5248,200 @@
     return ArrayUtil;
   }();
 
+  var GLContextImpl = function () {
+    function GLContextImpl(canvas, parent) {
+      babelHelpers.classCallCheck(this, GLContextImpl);
+
+      //    if (new.target === GLContextImpl) {
+      if (this.constructor === GLContextImpl) {
+        throw new TypeError("Cannot construct GLContextImpl instances directly");
+      }
+
+      if (!(parent instanceof GLContext)) {
+        throw new Error("This concrete class can only be instantiated from the 'GLContext' class.");
+      }
+
+      if (canvas === void 0) {
+        throw new Error("Failed to create WebGL Context due to no canvas object.");
+      }
+
+      this._canvas = canvas;
+    }
+
+    babelHelpers.createClass(GLContextImpl, [{
+      key: "init",
+      value: function init(glVersionString, ContextType) {
+
+        var gl = this._canvas.getContext(glVersionString);
+
+        if (!gl) {
+          gl = this._canvas.getContext('experimental-' + glVersionString);
+          if (!gl) {
+            throw new Error("This platform doesn't support WebGL.");
+          }
+        }
+
+        if (!gl instanceof ContextType) {
+          throw new Error("Unexpected rendering context.");
+        }
+
+        this._gl = gl;
+      }
+    }, {
+      key: "gl",
+      get: function get() {
+        return this._gl;
+      }
+    }, {
+      key: "canvas",
+      get: function get() {
+        return this._canvas;
+      }
+    }]);
+    return GLContextImpl;
+  }();
+
+  var GLContextWebGL2Impl = function (_GLContextImpl) {
+    babelHelpers.inherits(GLContextWebGL2Impl, _GLContextImpl);
+
+    function GLContextWebGL2Impl(canvas, parent) {
+      babelHelpers.classCallCheck(this, GLContextWebGL2Impl);
+
+      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(GLContextWebGL2Impl).call(this, canvas, parent));
+
+      babelHelpers.get(Object.getPrototypeOf(GLContextWebGL2Impl.prototype), 'init', _this).call(_this, 'webgl2', WebGL2RenderingContext);
+
+      return _this;
+    }
+
+    return GLContextWebGL2Impl;
+  }(GLContextImpl);
+
+  var GLContextWebGL1Impl = function (_GLContextImpl) {
+    babelHelpers.inherits(GLContextWebGL1Impl, _GLContextImpl);
+
+    function GLContextWebGL1Impl(canvas, parent) {
+      babelHelpers.classCallCheck(this, GLContextWebGL1Impl);
+
+      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(GLContextWebGL1Impl).call(this, canvas, parent));
+
+      babelHelpers.get(Object.getPrototypeOf(GLContextWebGL1Impl.prototype), 'init', _this).call(_this, 'webgl', WebGLRenderingContext);
+
+      return _this;
+    }
+
+    return GLContextWebGL1Impl;
+  }(GLContextImpl);
+
+  var GLContext = function () {
+    function GLContext(canvas) {
+      babelHelpers.classCallCheck(this, GLContext);
+
+      if (GLContext._instances[canvas.id] instanceof GLContext) {
+        return GLContext._instances[canvas.id];
+      }
+
+      if (GLBoost.TARGET_WEBGL_VERSION === 1) {
+        this.impl = new GLContextWebGL1Impl(canvas, this);
+      } else if (GLBoost.TARGET_WEBGL_VERSION === 2) {
+        this.impl = new GLContextWebGL2Impl(canvas, this);
+      }
+
+      GLContext._instances[canvas.id] = this;
+      this._monitor = GLBoostMonitor.getInstance();
+    }
+
+    babelHelpers.createClass(GLContext, [{
+      key: 'createVertexArray',
+      value: function createVertexArray(glBoostObject) {
+        var gl = this.gl;
+        var glem = GLExtensionsManager.getInstance(this);
+        var glResource = glem.createVertexArray(gl);
+        if (glResource) {
+          this._monitor.registerWebGLResource(glBoostObject, glResource);
+        }
+
+        return glResource;
+      }
+    }, {
+      key: 'createBuffer',
+      value: function createBuffer(glBoostObject) {
+        var glResource = this.gl.createBuffer();
+        this._monitor.registerWebGLResource(glBoostObject, glResource);
+        return glResource;
+      }
+    }, {
+      key: 'createFramebuffer',
+      value: function createFramebuffer(glBoostObject) {
+        var glResource = this.gl.createFramebuffer();
+        this._monitor.registerWebGLResource(glBoostObject, glResource);
+        return glResource;
+      }
+    }, {
+      key: 'createRenderbuffer',
+      value: function createRenderbuffer(glBoostObject) {
+        var glResource = this.gl.createRenderbuffer();
+        this._monitor.registerWebGLResource(glBoostObject, glResource);
+        return glResource;
+      }
+    }, {
+      key: 'createShader',
+      value: function createShader(glBoostObject, shaderType) {
+        var glResource = this.gl.createShader(shaderType);
+        this._monitor.registerWebGLResource(glBoostObject, glResource);
+        return glResource;
+      }
+    }, {
+      key: 'deleteShader',
+      value: function deleteShader(glBoostObject, shader) {
+        this._monitor.deregisterWebGLResource(glBoostObject, shader);
+        this.gl.deleteShader(shader);
+        shader = null;
+      }
+    }, {
+      key: 'createProgram',
+      value: function createProgram(glBoostObject) {
+        var glResource = this.gl.createProgram();
+        this._monitor.registerWebGLResource(glBoostObject, glResource);
+        return glResource;
+      }
+    }, {
+      key: 'deleteProgram',
+      value: function deleteProgram(glBoostObject, program) {
+        this._monitor.deregisterWebGLResource(glBoostObject, program);
+        this.gl.deleteProgram(program);
+      }
+    }, {
+      key: 'createTexture',
+      value: function createTexture(glBoostObject) {
+        var glResource = this.gl.createTexture();
+        this._monitor.registerWebGLResource(glBoostObject, glResource);
+        return glResource;
+      }
+    }, {
+      key: 'gl',
+      get: function get() {
+        return this.impl.gl;
+      }
+    }, {
+      key: 'canvas',
+      get: function get() {
+        return this.impl.canvas;
+      }
+    }], [{
+      key: 'getInstance',
+      value: function getInstance(canvas) {
+        if (typeof canvas === 'string') {
+          canvas = window.document.querySelector(canvas);
+        }
+        return new GLContext(canvas);
+      }
+    }]);
+    return GLContext;
+  }();
+
+  GLContext._instances = new Object();
+
   var FragmentSimpleShaderSource = function () {
     function FragmentSimpleShaderSource() {
       babelHelpers.classCallCheck(this, FragmentSimpleShaderSource);
@@ -4264,6 +5472,121 @@
     }]);
     return FragmentSimpleShaderSource;
   }();
+
+  var SimpleShader = function (_Shader) {
+    babelHelpers.inherits(SimpleShader, _Shader);
+
+    function SimpleShader(glBoostContext) {
+      var basicShader = arguments.length <= 1 || arguments[1] === undefined ? VertexWorldShaderSource : arguments[1];
+      babelHelpers.classCallCheck(this, SimpleShader);
+
+      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(SimpleShader).call(this, glBoostContext));
+
+      SimpleShader.mixin(basicShader);
+      SimpleShader.mixin(FragmentSimpleShaderSource);
+      return _this;
+    }
+
+    return SimpleShader;
+  }(Shader);
+
+  GLBoost['SimpleShader'] = SimpleShader;
+
+  var VertexWorldShadowShaderSource = function () {
+    function VertexWorldShadowShaderSource() {
+      babelHelpers.classCallCheck(this, VertexWorldShadowShaderSource);
+    }
+
+    babelHelpers.createClass(VertexWorldShadowShaderSource, [{
+      key: 'VSDefine_VertexWorldShadowShaderSource',
+      value: function VSDefine_VertexWorldShadowShaderSource(in_, out_, f, lights, material, extraData) {
+        var shaderText = '';
+        var textureUnitIndex = 0;
+        //for (let i=0; i<lights.length; i++) {
+        //if (lights[i].camera && lights[i].camera.texture) {
+        shaderText += 'uniform mat4 depthPVMatrix[' + lights.length + '];\n';
+        shaderText += out_ + ' vec4 v_shadowCoord[' + lights.length + '];\n';
+        textureUnitIndex++;
+        //}
+        //}
+
+        return shaderText;
+      }
+    }, {
+      key: 'VSTransform_VertexWorldShadowShaderSource',
+      value: function VSTransform_VertexWorldShadowShaderSource(existCamera_f, f, lights, material, extraData) {
+        var shaderText = '';
+
+        shaderText += 'mat4 biasMatrix = mat4(\n      0.5, 0.0, 0.0, 0.0,\n      0.0, 0.5, 0.0, 0.0,\n      0.0, 0.0, 0.5, 0.0,\n      0.5, 0.5, 0.5, 1.0\n    );\n';
+
+        //shaderText += `  for (int i=0; i<${lights.length}; i++) {\n`;
+        for (var i = 0; i < lights.length; i++) {
+          shaderText += '  { // ' + i + '\n';
+          shaderText += '    mat4 depthBiasPV = biasMatrix * depthPVMatrix[' + i + ']; // ' + i + '\n';
+          //shaderText += `    mat4 depthBiasPV = depthPVMatrix[${i}];\n`;
+          shaderText += '    v_shadowCoord[' + i + '] = depthBiasPV * worldMatrix * vec4(aVertex_position, 1.0); // ' + i + '\n';
+          shaderText += '  } // ' + i + '\n';
+        }
+        return shaderText;
+      }
+    }, {
+      key: 'FSDefine_VertexWorldShadowShaderSource',
+      value: function FSDefine_VertexWorldShadowShaderSource(in_, f, lights, material, extraData) {
+        var shaderText = '';
+
+        return shaderText;
+      }
+    }, {
+      key: 'FSShade_VertexWorldShadowShaderSource',
+      value: function FSShade_VertexWorldShadowShaderSource(f, gl, lights) {
+        var shaderText = '';
+        return shaderText;
+      }
+    }, {
+      key: 'prepare_VertexWorldShadowShaderSource',
+      value: function prepare_VertexWorldShadowShaderSource(gl, shaderProgram, vertexAttribs, existCamera_f, lights, material, extraData, canvas) {
+
+        var vertexAttribsAsResult = [];
+
+        vertexAttribs.forEach(function (attribName) {
+          if (attribName === GLBoost.POSITION || attribName === GLBoost.NORMAL) {
+            shaderProgram['vertexAttribute_' + attribName] = gl.getAttribLocation(shaderProgram, 'aVertex_' + attribName);
+            gl.enableVertexAttribArray(shaderProgram['vertexAttribute_' + attribName]);
+            vertexAttribsAsResult.push(attribName);
+          }
+        });
+
+        shaderProgram.worldMatrix = gl.getUniformLocation(shaderProgram, 'worldMatrix');
+        shaderProgram.normalMatrix = gl.getUniformLocation(shaderProgram, 'normalMatrix');
+        if (existCamera_f) {
+          shaderProgram.viewMatrix = gl.getUniformLocation(shaderProgram, 'viewMatrix');
+          shaderProgram.projectionMatrix = gl.getUniformLocation(shaderProgram, 'projectionMatrix');
+        }
+
+        for (var i = 0; i < lights.length; i++) {
+          shaderProgram['lightPosition_' + i] = gl.getUniformLocation(shaderProgram, 'lightPosition[' + i + ']');
+          shaderProgram['lightDiffuse_' + i] = gl.getUniformLocation(shaderProgram, 'lightDiffuse[' + i + ']');
+        }
+
+        var textureUnitIndex = 0;
+        for (var i = 0; i < lights.length; i++) {
+          //if (lights[i].camera && lights[i].camera.texture) {
+
+          // matrices
+          shaderProgram['depthPVMatrix_' + textureUnitIndex] = gl.getUniformLocation(shaderProgram, 'depthPVMatrix[' + textureUnitIndex + ']');
+
+          textureUnitIndex++;
+          //}
+          //shaderProgram['isShadowCasting' + i] = gl.getUniformLocation(shaderProgram, 'isShadowCasting[' + i + ']');
+        }
+
+        return vertexAttribsAsResult;
+      }
+    }]);
+    return VertexWorldShadowShaderSource;
+  }();
+
+  GLBoost['VertexWorldShadowShaderSource'] = VertexWorldShadowShaderSource;
 
   var DecalShaderSource = function () {
     function DecalShaderSource() {
@@ -4298,13 +5621,15 @@
       }
     }, {
       key: 'FSDefine_DecalShaderSource',
-      value: function FSDefine_DecalShaderSource(in_, f) {
+      value: function FSDefine_DecalShaderSource(in_, f, lights, material, extraData) {
         var shaderText = '';
         if (Shader._exist(f, GLBoost.COLOR)) {
           shaderText += in_ + ' vec4 color;\n';
         }
         if (Shader._exist(f, GLBoost.TEXCOORD)) {
           shaderText += in_ + ' vec2 texcoord;\n\n';
+        }
+        if (material.diffuseTexture !== null) {
           shaderText += 'uniform sampler2D uTexture;\n';
         }
         shaderText += 'uniform vec4 materialBaseColor;\n';
@@ -4313,16 +5638,18 @@
       }
     }, {
       key: 'FSShade_DecalShaderSource',
-      value: function FSShade_DecalShaderSource(f, gl) {
+      value: function FSShade_DecalShaderSource(f, gl, lights, material, extraData) {
         var shaderText = '';
         var textureFunc = Shader._texture_func(gl);
         if (Shader._exist(f, GLBoost.COLOR)) {
           shaderText += '  rt0 *= color;\n';
         }
         shaderText += '    rt0 *= materialBaseColor;\n';
-        if (Shader._exist(f, GLBoost.TEXCOORD)) {
+        if (Shader._exist(f, GLBoost.TEXCOORD) && material.diffuseTexture !== null) {
           shaderText += '  rt0 *= ' + textureFunc + '(uTexture, texcoord);\n';
         }
+        //shaderText += '    float shadowRatio = 0.0;\n';
+
         //shaderText += '    rt0 = vec4(1.0, 0.0, 0.0, 1.0);\n';
         return shaderText;
       }
@@ -4342,8 +5669,8 @@
         shaderProgram.materialBaseColor = gl.getUniformLocation(shaderProgram, 'materialBaseColor');
 
         if (Shader._exist(vertexAttribs, GLBoost.TEXCOORD)) {
-          shaderProgram.uniformTextureSampler_0 = gl.getUniformLocation(shaderProgram, 'texture');
-          // サンプラーにテクスチャユニット０を指定する
+          shaderProgram.uniformTextureSampler_0 = gl.getUniformLocation(shaderProgram, 'uTexture');
+          // set texture unit 0 to the sampler
           gl.uniform1i(shaderProgram.uniformTextureSampler_0, 0);
         }
 
@@ -4363,6 +5690,9 @@
       var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(DecalShader).call(this, glBoostContext));
 
       DecalShader.mixin(basicShader);
+      if (basicShader === VertexWorldShaderSource) {
+        DecalShader.mixin(VertexWorldShadowShaderSource);
+      }
       DecalShader.mixin(FragmentSimpleShaderSource);
       DecalShader.mixin(DecalShaderSource);
       return _this;
@@ -4401,6 +5731,7 @@
       _this._shaderInstance = null;
       _this._vertexNofGeometries = {};
 
+      _this._countOfUpdate = 0;
       return _this;
     }
 
@@ -4422,6 +5753,16 @@
         return material;
       }
     }, {
+      key: '_updateCount',
+      value: function _updateCount() {
+        this._countOfUpdate += 1;
+      }
+    }, {
+      key: 'getUpdateStateString',
+      value: function getUpdateStateString() {
+        return this.toString() + '_updateCount_' + this._countOfUpdate;
+      }
+    }, {
       key: 'setVertexN',
       value: function setVertexN(geom, num) {
         this._vertexNofGeometries[geom] = num;
@@ -4437,9 +5778,7 @@
         var gl = this._gl;
         var result = false;
         if (this._diffuseTexture) {
-          // テクスチャユニット０にテクスチャオブジェクトをバインドする
-          gl.activeTexture(gl.TEXTURE0);
-          result = this._diffuseTexture.setUp();
+          result = this._diffuseTexture.setUp(0);
         } else {
           gl.bindTexture(gl.TEXTURE_2D, null);
           result = true;
@@ -4473,6 +5812,7 @@
       key: 'shaderInstance',
       set: function set(shaderInstance) {
         this._shaderInstance = shaderInstance;
+        this._updateCount();
       },
       get: function get() {
         return this._shaderInstance;
@@ -4481,6 +5821,7 @@
       key: 'diffuseTexture',
       set: function set(tex) {
         this._diffuseTexture = tex;
+        this._updateCount();
       },
       get: function get() {
         return this._diffuseTexture;
@@ -4489,6 +5830,7 @@
       key: 'baseColor',
       set: function set(vec) {
         this._baseColor = vec;
+        this._updateCount();
       },
       get: function get() {
         return this._baseColor;
@@ -4497,6 +5839,7 @@
       key: 'diffuseColor',
       set: function set(vec) {
         this._diffuseColor = vec;
+        this._updateCount();
       },
       get: function get() {
         return this._diffuseColor;
@@ -4505,6 +5848,7 @@
       key: 'specularColor',
       set: function set(vec) {
         this._specularColor = vec;
+        this._updateCount();
       },
       get: function get() {
         return this._specularColor;
@@ -4513,6 +5857,7 @@
       key: 'ambientColor',
       set: function set(vec) {
         this._ambientColor = vec;
+        this._updateCount();
       },
       get: function get() {
         return this._ambientColor;
@@ -4550,9 +5895,7 @@
       _this._defaultMaterial = glBoostContext.createClassicMaterial();
       _this._vertexData = [];
       _this._extraDataForShader = {};
-      _this._AABB_min = new Vector3(Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE);
-      _this._AABB_max = new Vector3(Number.MIN_VALUE, Number.MIN_VALUE, Number.MIN_VALUE);
-      _this._centerPosition = Vector3.zero();
+      _this._AABB = new AABB();
       _this._drawKicker = DrawKickerWorld.getInstance();
 
       if (_this._drawKicker instanceof DrawKickerWorld) {} else if (_this._drawKicker instanceof DrawKickerLocal) {}
@@ -4561,32 +5904,16 @@
 
     /**
      * データとして利用する頂点属性を判断し、そのリストを返す
-     * 不必要な頂点属性のデータは無視する。
      */
 
 
     babelHelpers.createClass(Geometry, [{
       key: '_decideNeededVertexAttribs',
       value: function _decideNeededVertexAttribs(vertices, material) {
-        var _material = null;
-        if (material) {
-          _material = material;
-        } else {
-          _material = this._materials[0];
-        }
 
         var attribNameArray = [];
         for (var attribName in vertices) {
-          if (attribName === GLBoost$1.TEXCOORD) {
-            // texcoordの場合は、テクスチャ付きのマテリアルをちゃんと持っているときに限り、'texcoord'が有効となる
-            if (_material !== void 0 && _material.diffuseTexture !== null) {
-              attribNameArray.push(attribName);
-            } else {
-              //delete vertices[GLBoost.TEXCOORD];
-            }
-          } else {
-              attribNameArray.push(attribName);
-            }
+          attribNameArray.push(attribName);
         }
 
         return attribNameArray;
@@ -4607,23 +5934,6 @@
         return attribNameArray;
       }
     }, {
-      key: '_updateAABB',
-      value: function _updateAABB(positionVector) {
-        this._AABB_min.x = positionVector.x < this._AABB_min.x ? positionVector.x : this._AABB_min.x;
-        this._AABB_min.y = positionVector.y < this._AABB_min.y ? positionVector.y : this._AABB_min.y;
-        this._AABB_min.z = positionVector.z < this._AABB_min.z ? positionVector.z : this._AABB_min.z;
-        this._AABB_max.x = this._AABB_max.x < positionVector.x ? positionVector.x : this._AABB_max.x;
-        this._AABB_max.y = this._AABB_max.y < positionVector.y ? positionVector.y : this._AABB_max.y;
-        this._AABB_max.z = this._AABB_max.z < positionVector.z ? positionVector.z : this._AABB_max.z;
-
-        return positionVector;
-      }
-    }, {
-      key: '_updateCenterPosition',
-      value: function _updateCenterPosition() {
-        this._centerPosition = Vector3.divide(Vector3.subtract(this._AABB_max, this._AABB_min), 2);
-      }
-    }, {
       key: 'setVerticesData',
       value: function setVerticesData(vertices, indicesArray) {
         var _this2 = this;
@@ -4642,12 +5952,12 @@
             _this2._vertices[attribName][index] = MathUtil.arrayToVector(element);
 
             if (attribName === 'position') {
-              _this2._updateAABB(_this2._vertices[attribName][index]);
+              _this2._AABB.addPosition(_this2._vertices[attribName][index]);
             }
           });
         });
 
-        this._updateCenterPosition();
+        this._AABB.updateAllInfo();
 
         this._indicesArray = indicesArray;
         this._primitiveType = primitiveType;
@@ -4696,7 +6006,7 @@
                 _this3._vertices[attribName][index] = element = MathUtil.arrayToVector(element);
 
                 if (attribName === 'position') {
-                  _this3._updateAABB(_this3._vertices[attribName][index]);
+                  _this3._AABB.addPosition(_this3._vertices[attribName][index]);
                 }
 
                 vertexData[idx++] = element.x;
@@ -4710,7 +6020,7 @@
               });
             });
 
-            _this3._updateCenterPosition();
+            _this3._AABB.updateAllInfo();
 
             if (!isCached) {
               _this3.Float32AryVertexData = new Float32Array(vertexData);
@@ -4781,7 +6091,7 @@
 
           material.shaderInstance = new shaderClass(this._glBoostContext, basicShaderSource);
         }
-        var glslProgram = material.shaderInstance.getShaderProgram(_optimizedVertexAttribs, existCamera_f, lights, this._extraDataForShader);
+        var glslProgram = material.shaderInstance.getShaderProgram(_optimizedVertexAttribs, existCamera_f, lights, material, this._extraDataForShader);
         if (doSetupVertexAttribs) {
           this.setUpVertexAttribs(gl, glslProgram, allVertexAttribs);
         }
@@ -4887,7 +6197,7 @@
       }
     }, {
       key: 'draw',
-      value: function draw(lights, camera, mesh, scene) {
+      value: function draw(lights, camera, mesh, scene, renderPassIndex) {
         var gl = this._glContext.gl;
         var glem = GLExtensionsManager.getInstance(this._glContext);
 
@@ -4902,7 +6212,7 @@
 
         var thisName = this.toString();
 
-        this._drawKicker.draw(gl, glem, this._glContext, mesh, materials, camera, lights, scene, this._vertices, Geometry._vaoDic, Geometry._vboDic, Geometry._iboArrayDic, this, thisName, this._primitiveType, this._vertexN);
+        this._drawKicker.draw(gl, glem, this._glContext, mesh, materials, camera, lights, scene, this._vertices, Geometry._vaoDic, Geometry._vboDic, Geometry._iboArrayDic, this, thisName, this._primitiveType, this._vertexN, renderPassIndex);
       }
 
       /**
@@ -4968,6 +6278,11 @@
         this._extraDataForShader[name] = value;
       }
     }, {
+      key: 'getExtraDataForShader',
+      value: function getExtraDataForShader(name) {
+        return this._extraDataForShader[name];
+      }
+    }, {
       key: 'materials',
       set: function set(materials) {
         this._materials = materials;
@@ -4978,7 +6293,12 @@
     }, {
       key: 'centerPosition',
       get: function get() {
-        return this._centerPosition;
+        return this._AABB.centerPoint;
+      }
+    }, {
+      key: 'AABB',
+      get: function get() {
+        return this._AABB;
       }
     }], [{
       key: 'clearMaterialCache',
@@ -5041,54 +6361,76 @@
       value: function draw(expression) {
         var _this2 = this;
 
-        expression.renderPaths.forEach(function (renderPath) {
-          if (!renderPath.scene) {
+        expression.renderPasses.forEach(function (renderPass, index) {
+          if (!renderPass.scene) {
             return;
           }
 
           var camera = false;
-          renderPath.scene.cameras.forEach(function (elm) {
-            if (elm.isMainCamera(renderPath.scene)) {
+          renderPass.scene.cameras.forEach(function (elm) {
+            if (elm.isMainCamera(renderPass.scene)) {
               camera = elm;
             }
           });
 
           var gl = _this2._glContext.gl;
+          var canvas = _this2._glContext.canvas;
           var glem = GLExtensionsManager.getInstance(_this2._glContext);
 
-          var lights = renderPath.scene.lights;
+          var lights = renderPass.scene.lights;
 
-          if (renderPath.fboOfRenderTargetTextures) {
+          if (renderPass.fbo) {
             gl.bindTexture(gl.TEXTURE_2D, null);
             Geometry.clearMaterialCache();
-            gl.bindFramebuffer(gl.FRAMEBUFFER, renderPath.fboOfRenderTargetTextures);
+            gl.bindFramebuffer(gl.FRAMEBUFFER, renderPass.fbo);
           }
-          glem.drawBuffers(gl, renderPath.buffersToDraw); // set render target buffers for each RenderPath.
+          glem.drawBuffers(gl, renderPass.buffersToDraw); // set render target buffers for each RenderPass.
 
-          if (renderPath.clearColor) {
-            var color = renderPath.clearColor;
-            gl.clearColor(color.x, color.y, color.z, color.w);
-            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+          if (renderPass.renderTargetColorTextures || renderPass.renderTargetDepthTexture) {
+            gl.viewport(renderPass.viewport.x, renderPass.viewport.y, renderPass.viewport.z, renderPass.viewport.w);
+          } else {
+            gl.viewport(0, 0, canvas.width, canvas.height);
           }
+
+          _this2._clearBuffer(gl, renderPass);
 
           // draw opacity meshes.
-          var opacityMeshes = renderPath.opacityMeshes;
+          var opacityMeshes = renderPass.opacityMeshes;
           opacityMeshes.forEach(function (mesh) {
-            mesh.draw(lights, camera, renderPath.scene);
+            mesh.draw(lights, camera, renderPass.scene, index);
           });
 
           if (camera) {
-            renderPath.sortTransparentMeshes(camera);
+            renderPass.sortTransparentMeshes(camera);
           }
           // draw transparent meshes.
-          var transparentMeshes = renderPath.transparentMeshes;
+          var transparentMeshes = renderPass.transparentMeshes;
           transparentMeshes.forEach(function (mesh) {
-            mesh.draw(lights, camera, renderPath.scene);
+            mesh.draw(lights, camera, renderPass.scene, index);
           });
 
           gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-          glem.drawBuffers(gl, [gl.BACK]);
+          //      glem.drawBuffers(gl, [gl.BACK]);
         });
+      }
+    }, {
+      key: '_clearBuffer',
+      value: function _clearBuffer(gl, renderPass) {
+        var clearColor = renderPass.clearColor;
+        var clearDepth = renderPass.clearDepth;
+        if (clearColor) {
+          gl.clearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
+        }
+        if (clearDepth) {
+          gl.clearDepth(clearDepth);
+        }
+        if (clearColor || clearDepth) {
+          gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        } else if (clearColor) {
+          gl.clear(gl.COLOR_BUFFER_BIT);
+        } else {
+          gl.clear(gl.DEPTH_BUFFER_BIT);
+        }
       }
 
       /**
@@ -5145,26 +6487,260 @@
     return Renderer;
   }(GLBoostObject);
 
-  var SkeletalMesh = function (_Mesh) {
-    babelHelpers.inherits(SkeletalMesh, _Mesh);
+  var SkeletalShaderSource = function () {
+    function SkeletalShaderSource() {
+      babelHelpers.classCallCheck(this, SkeletalShaderSource);
+    }
 
-    function SkeletalMesh(glBoostContext, geometry, material, rootJointName) {
-      babelHelpers.classCallCheck(this, SkeletalMesh);
+    babelHelpers.createClass(SkeletalShaderSource, [{
+      key: 'VSDefine_SkeletalShaderSource',
+      value: function VSDefine_SkeletalShaderSource(in_, out_, f, lights, material, extraData) {
+        var shaderText = '';
+        shaderText += in_ + ' vec4 aVertex_joint;\n';
+        shaderText += in_ + ' vec4 aVertex_weight;\n';
+        shaderText += 'uniform mat4 skinTransformMatrices[' + extraData.jointN + '];\n';
+        shaderText += 'uniform mat4 invWorldMatrix;\n';
+        return shaderText;
+      }
 
-      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(SkeletalMesh).call(this, glBoostContext, geometry, material, rootJointName));
+      /**
+       * @return {string}
+       */
+
+    }, {
+      key: 'VSTransform_SkeletalShaderSource',
+      value: function VSTransform_SkeletalShaderSource(existCamera_f, f, lights, material, extraData) {
+        var shaderText = '';
+
+        shaderText += 'vec4 weightVec = normalize(aVertex_weight);\n';
+        shaderText += 'mat4 skinMat = weightVec.x * skinTransformMatrices[int(aVertex_joint.x)];\n';
+        shaderText += 'skinMat += weightVec.y * skinTransformMatrices[int(aVertex_joint.y)];\n';
+        shaderText += 'skinMat += weightVec.z * skinTransformMatrices[int(aVertex_joint.z)];\n';
+        shaderText += 'skinMat += weightVec.w * skinTransformMatrices[int(aVertex_joint.w)];\n';
+
+        shaderText += '  vec4 position = invWorldMatrix * vec4(aVertex_position.x, aVertex_position.y, aVertex_position.z, 1.0);';
+
+        if (existCamera_f) {
+          shaderText += '  gl_Position = pvwMatrix * skinMat * position;\n';
+        } else {
+          shaderText += '  gl_Position = skinMat * vec4(aVertex_position, 1.0);\n';
+        }
+
+        return shaderText;
+      }
+    }, {
+      key: 'prepare_SkeletalShaderSource',
+      value: function prepare_SkeletalShaderSource(gl, shaderProgram, vertexAttribs, existCamera_f, lights, material, extraData, canvas) {
+        var vertexAttribsAsResult = [];
+
+        vertexAttribs.forEach(function (attribName) {
+          if (attribName === GLBoost.JOINT || attribName === GLBoost.WEIGHT) {
+            vertexAttribsAsResult.push(attribName);
+            shaderProgram['vertexAttribute_' + attribName] = gl.getAttribLocation(shaderProgram, 'aVertex_' + attribName);
+            gl.enableVertexAttribArray(shaderProgram['vertexAttribute_' + attribName]);
+          }
+        });
+
+        shaderProgram['skinTransformMatrices'] = gl.getUniformLocation(shaderProgram, 'skinTransformMatrices');
+        // とりあえず単位行列で初期化
+        var identityMatrices = [];
+        for (var i = 0; i < extraData.jointN; i++) {
+          Array.prototype.push.apply(identityMatrices, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+        }
+        gl.uniformMatrix4fv(shaderProgram['skinTransformMatrices'], false, new Float32Array(identityMatrices));
+
+        shaderProgram['invWorldMatrix'] = gl.getUniformLocation(shaderProgram, 'invWorldMatrix');
+
+        return vertexAttribsAsResult;
+      }
+    }]);
+    return SkeletalShaderSource;
+  }();
+
+  var M_SkeletalGeometry = function (_Geometry) {
+    babelHelpers.inherits(M_SkeletalGeometry, _Geometry);
+
+    function M_SkeletalGeometry(glBoostContext) {
+      babelHelpers.classCallCheck(this, M_SkeletalGeometry);
+      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(M_SkeletalGeometry).call(this, glBoostContext));
+    }
+
+    babelHelpers.createClass(M_SkeletalGeometry, [{
+      key: 'draw',
+      value: function draw(lights, camera, skeletalMesh, scene, renderPass_index) {
+        var gl = this._glContext.gl;
+        if (this._materials.length > 0) {
+          var materials = this._materials;
+        } else if (skeletalMesh.material) {
+          var materials = [skeletalMesh.material];
+        } else {
+          var materials = [];
+        }
+
+        var calcParentJointsMatricesRecursively = function calcParentJointsMatricesRecursively(joint) {
+          var children = joint.parent.parent.getChildren();
+          var parentJoint = null;
+          for (var i = 0; i < children.length; i++) {
+            if (children[i] instanceof M_Joint) {
+              parentJoint = children[i];
+            }
+          }
+
+          var results = [];
+          if (parentJoint) {
+            var result = calcParentJointsMatricesRecursively(parentJoint);
+            if (Array.isArray(result)) {
+              Array.prototype.push.apply(results, result);
+            }
+
+            results.push(parentJoint);
+
+            return results;
+          }
+
+          return null;
+        };
+
+        var joints = skeletalMesh._joints; //skeletalMesh.jointsHierarchy.searchElementsByType(M_Joint);
+        var matrices = [];
+        var globalJointTransform = [];
+        var inverseBindPoseMatrices = [];
+        for (var i = 0; i < joints.length; i++) {
+
+          var jointsHierarchy = calcParentJointsMatricesRecursively(joints[i]);
+          if (jointsHierarchy == null) {
+            jointsHierarchy = [];
+          }
+          jointsHierarchy.push(joints[i]);
+          //console.log(jointsHierarchy);
+          var tempMatrices = [];
+
+          for (var j = 0; j < jointsHierarchy.length; j++) {
+            var thisLoopMatrix = jointsHierarchy[j].parent.transformMatrixGLTFStyle;
+            if (j > 0) {
+              tempMatrices[j] = Matrix44.multiply(tempMatrices[j - 1], thisLoopMatrix);
+            } else {
+              var upperGroupsAccumulatedMatrix = Matrix44.identity();
+              if (typeof jointsHierarchy[0].parent.parent != 'undefined' && jointsHierarchy[0].parent.parent instanceof M_Group) {
+                // if there are group hierarchies above the root joint ...
+                upperGroupsAccumulatedMatrix = skeletalMesh.transformMatrixAccumulatedAncestry;
+              }
+              tempMatrices[j] = upperGroupsAccumulatedMatrix.multiply(thisLoopMatrix);
+            }
+          }
+          globalJointTransform[i] = tempMatrices[jointsHierarchy.length - 1];
+        }
+        for (var i = 0; i < joints.length; i++) {
+
+          matrices[i] = Matrix44.multiply(Matrix44.invert(skeletalMesh.transformMatrixAccumulatedAncestry), globalJointTransform[i]);
+          var inverseBindMatrix = typeof skeletalMesh.inverseBindMatrices[i] !== 'undefined' ? skeletalMesh.inverseBindMatrices[i] : Matrix44.identity();
+          matrices[i] = Matrix44.multiply(matrices[i], inverseBindMatrix);
+          matrices[i] = Matrix44.multiply(matrices[i], skeletalMesh.bindShapeMatrix);
+        }
+
+        var flatMatrices = [];
+        for (var i = 0; i < matrices.length; i++) {
+          Array.prototype.push.apply(flatMatrices, matrices[i].flattenAsArray());
+        }
+
+        if (matrices.length < 4) {
+          var identityMatrices = [];
+          for (var i = 0; i < 4 - matrices.length; i++) {
+            Array.prototype.push.apply(identityMatrices, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+          }
+          Array.prototype.push.apply(flatMatrices, identityMatrices);
+        }
+
+        for (var i = 0; i < materials.length; i++) {
+          var glslProgram = materials[i].shaderInstance.glslProgram;
+          gl.useProgram(glslProgram);
+          gl.uniformMatrix4fv(glslProgram.skinTransformMatrices, false, new Float32Array(flatMatrices));
+          gl.uniformMatrix4fv(glslProgram.invWorldMatrix, false, Matrix44.invert(skeletalMesh.transformMatrixAccumulatedAncestry).flatten());
+        }
+
+        babelHelpers.get(Object.getPrototypeOf(M_SkeletalGeometry.prototype), 'draw', this).call(this, lights, camera, skeletalMesh, scene, renderPass_index);
+      }
+    }, {
+      key: 'prepareToRender',
+      value: function prepareToRender(existCamera_f, pointLight, meshMaterial, skeletalMesh) {
+        // before prepareForRender of 'Geometry' class, a new 'BlendShapeShader'(which extends default shader) is assigned.
+
+        if (this._materials.length > 0) {
+          this._materialForSkeletal = this._materials[0];
+        } else if (meshMaterial) {
+          this._materialForSkeletal = meshMaterial;
+        } else {
+          this._materialForSkeletal = this._defaultMaterial;
+        }
+
+        var SkeletalShader = function (_materialForSkeletal$) {
+          babelHelpers.inherits(SkeletalShader, _materialForSkeletal$);
+
+          function SkeletalShader(glBoostContext, basicShader) {
+            babelHelpers.classCallCheck(this, SkeletalShader);
+
+            var _this2 = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(SkeletalShader).call(this, glBoostContext, basicShader));
+
+            SkeletalShader.mixin(SkeletalShaderSource);
+            return _this2;
+          }
+
+          return SkeletalShader;
+        }(this._materialForSkeletal.shaderClass);
+
+        if (this._materials.length > 0) {
+          for (var i = 0; i < this._materials.length; i++) {
+            this._materials[i].shaderClass = SkeletalShader;
+          }
+        } else if (meshMaterial) {
+          meshMaterial.shaderClass = SkeletalShader;
+        } else {
+          this._defaultMaterial.shaderClass = SkeletalShader;
+        }
+
+        babelHelpers.get(Object.getPrototypeOf(M_SkeletalGeometry.prototype), 'prepareToRender', this).call(this, existCamera_f, pointLight, meshMaterial, skeletalMesh);
+      }
+    }]);
+    return M_SkeletalGeometry;
+  }(Geometry);
+
+  var M_SkeletalMesh = function (_M_Mesh) {
+    babelHelpers.inherits(M_SkeletalMesh, _M_Mesh);
+
+    function M_SkeletalMesh(glBoostContext, geometry, material, rootJointName) {
+      babelHelpers.classCallCheck(this, M_SkeletalMesh);
+
+      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(M_SkeletalMesh).call(this, glBoostContext, geometry, material, rootJointName));
 
       _this._rootJointName = rootJointName;
       _this._jointsHierarchy = null;
       _this._inverseBindMatrices = [];
+      _this._bindShapeMatrix = Matrix44.identity();
+      _this._jointNames = [];
+      _this._joints = [];
       return _this;
     }
 
-    babelHelpers.createClass(SkeletalMesh, [{
+    babelHelpers.createClass(M_SkeletalMesh, [{
       key: 'prepareToRender',
       value: function prepareToRender(existCamera_f, lights, renderPasses) {
         this.bakeTransformToGeometry();
         this.multiplyMatrix(Matrix44.identity());
-        babelHelpers.get(Object.getPrototypeOf(SkeletalMesh.prototype), 'prepareToRender', this).call(this, existCamera_f, lights, renderPasses);
+        var joints = this.jointsHierarchy.searchElementsByType(M_Joint);
+
+        this._joints = [];
+
+        for (var i = 0; i < this._jointNames.length; i++) {
+          for (var j = 0; j < joints.length; j++) {
+            if (this._jointNames[i] === joints[j]._userFlavorName) {
+              this._joints.push(joints[j]);
+              //this._inverseBindMatrices.push(this._rawInverseBindMatrices[j]);
+            }
+          }
+        }
+        //this._joints = joints;
+
+        babelHelpers.get(Object.getPrototypeOf(M_SkeletalMesh.prototype), 'prepareToRender', this).call(this, existCamera_f, lights, renderPasses);
       }
     }, {
       key: 'jointsHierarchy',
@@ -5188,222 +6764,37 @@
       get: function get() {
         return this._inverseBindMatrices;
       }
-    }]);
-    return SkeletalMesh;
-  }(Mesh);
-
-  GLBoost$1['SkeletalMesh'] = SkeletalMesh;
-
-  var Camera = function (_Element) {
-    babelHelpers.inherits(Camera, _Element);
-
-    function Camera(glBoostContext, lookat, perspective) {
-      babelHelpers.classCallCheck(this, Camera);
-
-      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Camera).call(this, glBoostContext));
-
-      _this._translate = lookat.eye;
-      _this._center = lookat.center;
-      _this._up = lookat.up;
-
-      _this._fovy = perspective.fovy;
-      _this._aspect = perspective.aspect;
-      _this._zNear = perspective.zNear;
-      _this._zFar = perspective.zFar;
-
-      _this._dirtyView = true;
-      _this._dirtyAsElement = true;
-      _this._updateCountAsCameraView = 0;
-      _this._dirtyProjection = true;
-      _this._updateCountAsCameraProjection = 0;
-      _this._mainCamera = {};
-      return _this;
-    }
-
-    babelHelpers.createClass(Camera, [{
-      key: '_needUpdateView',
-      value: function _needUpdateView() {
-        this._dirtyView = true;
-        this._updateCountAsCameraView++;
-      }
     }, {
-      key: '_needUpdateProjection',
-      value: function _needUpdateProjection() {
-        this._dirtyProjection = true;
-        this._updateCountAsCameraProjection++;
-      }
-    }, {
-      key: 'lookAtRHMatrix',
-      value: function lookAtRHMatrix() {
-        if (this._dirtyView) {
-          this._viewMatrix = Camera.lookAtRHMatrix(this._translate, this._center, this._up);
-          this._dirtyView = false;
-          return this._viewMatrix.clone();
-        } else {
-          return this._viewMatrix.clone();
-        }
-      }
-    }, {
-      key: 'perspectiveRHMatrix',
-      value: function perspectiveRHMatrix() {
-        if (this._dirtyProjection) {
-          this._projectionMatrix = Camera.perspectiveRHMatrix(this._fovy, this._aspect, this._zNear, this._zFar);
-          this._dirtyProjection = false;
-          return this._projectionMatrix.clone();
-        } else {
-          return this._projectionMatrix.clone();
-        }
-      }
-    }, {
-      key: 'setAsMainCamera',
-      value: function setAsMainCamera(scene) {
-        this._mainCamera[scene.toString()] = this;
-      }
-    }, {
-      key: 'isMainCamera',
-      value: function isMainCamera(scene) {
-        return this._mainCamera[scene.toString()] === this;
-      }
-    }, {
-      key: 'updateCountAsCameraView',
-      get: function get() {
-        return this._updateCountAsCameraView;
-      }
-    }, {
-      key: 'latestViewStateInfoString',
-      get: function get() {
-        var tempString = this._accumulateMyAndParentNameWithUpdateInfo(this);
-        tempString += '_updateCountAsCameraView_' + this._updateCountAsCameraView;
-      }
-    }, {
-      key: 'updateCountAsCameraProjection',
-      get: function get() {
-        return this._updateCountAsCameraProjection;
-      }
-    }, {
-      key: 'translate',
-      set: function set(vec) {
-        babelHelpers.set(Object.getPrototypeOf(Camera.prototype), 'translate', vec, this);
-        this._needUpdateView();
+      key: 'bindShapeMatrix',
+      set: function set(matrix) {
+        this._bindShapeMatrix = matrix;
       },
       get: function get() {
-        return babelHelpers.get(Object.getPrototypeOf(Camera.prototype), 'translate', this);
+        return this._bindShapeMatrix;
       }
     }, {
-      key: 'eye',
-      set: function set(vec) {
-        babelHelpers.set(Object.getPrototypeOf(Camera.prototype), 'translate', vec, this);
-        this._needUpdateView();
+      key: 'jointNames',
+      set: function set(names) {
+        this._jointNames = names;
       },
       get: function get() {
-        return this._translate;
-      }
-    }, {
-      key: 'center',
-      set: function set(vec) {
-        if (this._center.isEqual(vec)) {
-          return;
-        }
-        this._center = vec;
-        this._needUpdateView();
-      },
-      get: function get() {
-        return this._center;
-      }
-    }, {
-      key: 'up',
-      set: function set(vec) {
-        if (this._up.isEqual(vec)) {
-          return;
-        }
-        this._up = vec;
-        this._needUpdateView();
-      },
-      get: function get() {
-        return this._up;
-      }
-    }, {
-      key: 'fovy',
-      set: function set(value) {
-        if (this._fovy === value) {
-          return;
-        }
-        this._fovy = value;
-        this._needUpdateProjection();
-      },
-      get: function get() {
-        return this._fovy;
-      }
-    }, {
-      key: 'aspect',
-      set: function set(value) {
-        if (this._aspect === value) {
-          return;
-        }
-        this._aspect = value;
-        this._needUpdateProjection();
-      },
-      get: function get() {
-        return this._aspect;
-      }
-    }, {
-      key: 'zNear',
-      set: function set(value) {
-        if (this._zNear === value) {
-          return;
-        }
-        this._zNear = value;
-        this._needUpdateProjection();
-      },
-      get: function get() {
-        return this._zNear;
-      }
-    }, {
-      key: 'zFar',
-      set: function set(value) {
-        if (this._zFar === value) {
-          return;
-        }
-        this._zFar = value;
-        this._needUpdateProjection();
-      },
-      get: function get() {
-        return this._zFar;
-      }
-    }], [{
-      key: 'lookAtRHMatrix',
-      value: function lookAtRHMatrix(eye, center, up) {
-
-        var f = Vector3.normalize(Vector3.subtract(center, eye));
-        var s = Vector3.normalize(Vector3.cross(f, up));
-        var u = Vector3.cross(s, f);
-
-        return new Matrix44(s.x, s.y, s.z, -Vector3.dotProduct(s, eye), u.x, u.y, u.z, -Vector3.dotProduct(u, eye), -f.x, -f.y, -f.z, Vector3.dotProduct(f, eye), 0, 0, 0, 1);
-      }
-    }, {
-      key: 'perspectiveRHMatrix',
-      value: function perspectiveRHMatrix(fovy, aspect, zNear, zFar) {
-
-        var yscale = 1.0 / Math.tan(0.5 * fovy * Math.PI / 180);
-        var xscale = yscale / aspect;
-
-        return new Matrix44(xscale, 0.0, 0.0, 0.0, 0.0, yscale, 0.0, 0.0, 0.0, 0.0, -(zFar + zNear) / (zFar - zNear), -(2.0 * zFar * zNear) / (zFar - zNear), 0.0, 0.0, -1.0, 0.0);
+        return this._jointNames;
       }
     }]);
-    return Camera;
-  }(Element);
+    return M_SkeletalMesh;
+  }(M_Mesh);
 
-  Camera._mainCamera = null;
+  GLBoost$1['M_SkeletalMesh'] = M_SkeletalMesh;
 
   /**
-   * [en] This Scene class is the top level element of scene graph hierarchy.
+   * [en] This M_Scene class is the top level element of scene graph hierarchy.
    *       To render scene, pass this scene element to Renderer.draw method.<br>
    * [ja] このSceneクラスはシーングラフ階層のトップレベルに位置する要素です。
    *       シーンをレンダリングするには、このscene要素をRenderer.drawメソッドに渡します。
    */
 
-  var Scene = function (_Group) {
-    babelHelpers.inherits(Scene, _Group);
+  var M_Scene = function (_M_Group) {
+    babelHelpers.inherits(M_Scene, _M_Group);
 
 
     /**
@@ -5412,10 +6803,10 @@
      * @param {HTMLCanvas|string} canvas [en] canvas or canvas' id string. [ja] canvasまたはcanvasのid文字列
      */
 
-    function Scene(glBoostContext) {
-      babelHelpers.classCallCheck(this, Scene);
+    function M_Scene(glBoostContext) {
+      babelHelpers.classCallCheck(this, M_Scene);
 
-      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Scene).call(this, glBoostContext));
+      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(M_Scene).call(this, glBoostContext));
 
       _this._gl = _this._glContext.gl;
       _this._currentAnimationInputValues = {};
@@ -5423,7 +6814,7 @@
       return _this;
     }
 
-    babelHelpers.createClass(Scene, [{
+    babelHelpers.createClass(M_Scene, [{
       key: '_reset',
       value: function _reset() {
         this._meshes = [];
@@ -5439,7 +6830,7 @@
           element._needUpdate();
         }
 
-        if (element instanceof Group || element instanceof Scene) {
+        if (element instanceof M_Group || element instanceof M_Scene) {
           var children = element.getChildren();
           for (var i = 0; i < children.length; i++) {
             this._setDirtyToAnimatedElement(inputName, children[i]);
@@ -5478,39 +6869,30 @@
 
         this._reset();
 
-        (function setParentRecursively(elem) {
-          if (elem instanceof Group) {
+        var aabb = function setParentAndMergeAABBRecursively(elem) {
+          if (elem instanceof M_Group) {
             var children = elem.getChildren();
             for (var i = 0; i < children.length; i++) {
               children[i]._parent = elem;
-              setParentRecursively(children[i]);
+              var aabb = setParentAndMergeAABBRecursively(children[i]);
+              if (aabb instanceof AABB) {
+                elem.AABB.mergeAABB(aabb);
+              } else {
+                console.assert('calculation of AABB error!');
+              }
             }
+            return elem.AABB;
           }
-        })(this);
-
-        var collectMeshes = function collectMeshes(elem) {
-          if (elem instanceof Group) {
-            var children = elem.getChildren();
-            var meshes = [];
-            children.forEach(function (child) {
-              var childMeshes = collectMeshes(child);
-              meshes = meshes.concat(childMeshes);
-            });
-            return meshes;
-          } else if (elem instanceof Mesh) {
-            return [elem];
-          } else {
-            return [];
+          if (elem instanceof M_Mesh) {
+            return elem.AABB;
           }
-        };
 
-        this._meshes = [];
-        this._elements.forEach(function (elm) {
-          _this2._meshes = _this2._meshes.concat(collectMeshes(elm));
-        });
+          return null;
+        }(this);
+        this.AABB.mergeAABB(aabb);
 
         var collectLights = function collectLights(elem) {
-          if (elem instanceof Group) {
+          if (elem instanceof M_Group) {
             var children = elem.getChildren();
             var lights = [];
             children.forEach(function (child) {
@@ -5518,7 +6900,7 @@
               lights = lights.concat(childLights);
             });
             return lights;
-          } else if (elem instanceof AbstractLight) {
+          } else if (elem instanceof M_AbstractLight) {
             return [elem];
           } else {
             return [];
@@ -5532,7 +6914,7 @@
 
         var existCamera_f = false;
         var collectCameras = function collectCameras(elem) {
-          if (elem instanceof Group) {
+          if (elem instanceof M_Group) {
             var children = elem.getChildren();
             var cameras = [];
             children.forEach(function (child) {
@@ -5540,7 +6922,7 @@
               cameras = cameras.concat(childCameras);
             });
             return cameras;
-          } else if (elem instanceof Camera) {
+          } else if (elem instanceof M_AbstractCamera) {
             existCamera_f = true;
             return [elem];
           } else {
@@ -5556,9 +6938,42 @@
           this._cameras[0].setAsMainCamera(this);
         }
 
-        this._meshes.forEach(function (mesh) {
-          mesh.prepareToRender(existCamera_f, _this2._lights);
+        var collectMeshes = function collectMeshes(elem) {
+          if (elem instanceof M_Group) {
+            var children = elem.getChildren();
+            var meshes = [];
+            children.forEach(function (child) {
+              var childMeshes = collectMeshes(child);
+              meshes = meshes.concat(childMeshes);
+            });
+            return meshes;
+          } else if (elem instanceof M_Mesh) {
+            return [elem];
+          } else {
+            return [];
+          }
+        };
+
+        this._meshes = [];
+        this._elements.forEach(function (elm) {
+          _this2._meshes = _this2._meshes.concat(collectMeshes(elm));
         });
+
+        var callPrepareToRenderMethodOfAllElements = function callPrepareToRenderMethodOfAllElements(elem) {
+          if (elem instanceof M_Group) {
+            var children = elem.getChildren();
+            children.forEach(function (child) {
+              callPrepareToRenderMethodOfAllElements(child);
+            });
+          } else if (elem instanceof M_Mesh) {
+            elem.prepareToRender(existCamera_f, _this2._lights);
+          } else if (elem instanceof M_Element) {
+            elem.prepareToRender();
+          } else {
+            return;
+          }
+        };
+        callPrepareToRenderMethodOfAllElements(this);
       }
 
       /**
@@ -5588,7 +7003,7 @@
       /**
        * [en] Get child meshes which belong to this scene.<br>
        * [ja] このシーンに属していた子供のMesh要素の配列を返します。
-       * @return {Array<Mesh>} [en] child meshes of this scene. [ja] このシーンの子供のMesh要素
+       * @return {Array<M_Mesh>} [en] child meshes of this scene. [ja] このシーンの子供のMesh要素
        */
 
     }, {
@@ -5600,7 +7015,7 @@
       /**
        * [en] Get child lights which belong to this scene.<br>
        * [ja] このシーンに属していた子供のLight要素の配列を返します。
-       * @return {Array<AbstractLight>} [en] child lights of this scene. [ja] このシーンの子供のLight要素
+       * @return {Array<M_AbstractLight>} [en] child lights of this scene. [ja] このシーンの子供のLight要素
        */
 
     }, {
@@ -5612,7 +7027,7 @@
       /**
        * [en] Get child cameras which belong to this scene.<br>
        * [ja] このシーンに属していた子供のCamera要素の配列を返します。
-       * @return {Array<Camera>} [en] child cameras of this scene. [ja] このシーンの子供のCamera要素
+       * @return {Array<PerspectiveCamera>} [en] child cameras of this scene. [ja] このシーンの子供のCamera要素
        */
 
     }, {
@@ -5621,8 +7036,8 @@
         return this._cameras;
       }
     }]);
-    return Scene;
-  }(Group);
+    return M_Scene;
+  }(M_Group);
 
   /**
    * [en] This is the abstract class for all texture classes. Don't use this class directly.<br>
@@ -5650,6 +7065,8 @@
       }
 
       _this._name = '';
+
+      _this._textureUnitIndex = 0;
       return _this;
     }
 
@@ -5669,11 +7086,13 @@
        * [en] bind the texture. <br />
        * [ja] テクスチャをバインドします。
        */
-      value: function setUp() {
+      value: function setUp(textureUnitIndex) {
         var gl = this._glContext.gl;
         if (this._texture === null) {
           return false;
         }
+        var index = !(typeof textureUnitIndex === 'undefined') ? textureUnitIndex : this._textureUnitIndex;
+        gl.activeTexture(gl['TEXTURE' + index]);
         gl.bindTexture(gl.TEXTURE_2D, this._texture);
 
         return true;
@@ -5691,9 +7110,17 @@
         gl.bindTexture(gl.TEXTURE_2D, null);
       }
     }, {
-      key: '_isPowerOfTwo',
+      key: '_getResizedCanvas',
+      value: function _getResizedCanvas(image) {
+        var canvas = document.createElement("canvas");
+        canvas.width = this._getNearestPowerOfTwo(image.width);
+        canvas.height = this._getNearestPowerOfTwo(image.height);
 
+        var ctx = canvas.getContext("2d");
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
 
+        return canvas;
+      }
       /**
        * [en] check whether or not this texture size is power of two. <br />
        * [ja] テクスチャサイズが２の累乗かどうかを返します
@@ -5701,8 +7128,25 @@
        * @param {number} x [en] texture size. [ja] テクスチャサイズ
        * @returns {boolean} [en] check whether or not the size x is power of two. [ja] xが２の累乗かどうか
        */
+
+    }, {
+      key: '_isPowerOfTwo',
       value: function _isPowerOfTwo(x) {
         return (x & x - 1) == 0;
+      }
+
+      /**
+       * [en] get a value nearest power of two. <br />
+       * [ja] 与えられた数から見て２の累乗に最も近い値を返します。
+       *
+       * @param {number} x [en] texture size. [ja] テクスチャサイズ
+       * @returns {number} [en] a value nearest power of two. [ja] xに近い２の累乗の値
+       */
+
+    }, {
+      key: '_getNearestPowerOfTwo',
+      value: function _getNearestPowerOfTwo(x) {
+        return Math.pow(2, Math.round(Math.log(x) / Math.LN2));
       }
     }, {
       key: 'glTextureResource',
@@ -5726,6 +7170,14 @@
       key: 'height',
       get: function get() {
         return this._height;
+      }
+    }, {
+      key: 'textureUnitIndex',
+      set: function set(index) {
+        this._textureUnitIndex = index;
+      },
+      get: function get() {
+        return this._textureUnitIndex;
       }
     }]);
     return AbstractTexture;
@@ -5774,16 +7226,16 @@
 
     babelHelpers.createClass(MutableTexture, [{
       key: 'colorAttachment',
-      set: function set(attachmentId) {
-        this._colorAttachmentId = attachmentId;
+      set: function set(colorAttachmentId) {
+        this._colorAttachmentId = colorAttachmentId;
       },
       get: function get() {
         return this._colorAttachmentId;
       }
     }, {
       key: 'depthAttachment',
-      set: function set(attachmentId) {
-        this._depthAttachmentId = attachmentId;
+      set: function set(depthAttachmentId) {
+        this._depthAttachmentId = depthAttachmentId;
       },
       get: function get() {
         return this._depthAttachmentId;
@@ -5799,17 +7251,6 @@
     }]);
     return MutableTexture;
   }(AbstractTexture);
-
-  var Joint = function (_Element) {
-    babelHelpers.inherits(Joint, _Element);
-
-    function Joint(glBoostContext) {
-      babelHelpers.classCallCheck(this, Joint);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Joint).call(this, glBoostContext));
-    }
-
-    return Joint;
-  }(Element);
 
   var Texture = function (_AbstractTexture) {
     babelHelpers.inherits(Texture, _AbstractTexture);
@@ -5842,14 +7283,25 @@
         }
         var params = this._parameters;
 
+        var gl = this._glContext.gl;
+        var ret = null;
         switch (paramName) {
-          case 'flipY':
+          case GLBoost$1['UNPACK_FLIP_Y_WEBGL']:
+          case GLBoost$1['TEXTURE_MAG_FILTER']:
+          case GLBoost$1['TEXTURE_MIN_FILTER']:
+          case GLBoost$1['TEXTURE_WRAP_S']:
+          case GLBoost$1['TEXTURE_WRAP_T']:
             if (isParametersExist && params[paramName]) {
-              return params[paramName];
-            } else {
-              return false;
+              ret = params[paramName];
             }
+            break;
         }
+        return ret;
+      }
+    }, {
+      key: '_getParamWithAlternative',
+      value: function _getParamWithAlternative(param, alternative) {
+        return MiscUtil.getTheValueOrAlternative(this._getParameter(GLBoost$1[param], alternative));
       }
     }, {
       key: 'generateTextureFromUri',
@@ -5857,35 +7309,32 @@
         var _this2 = this;
 
         this._img = new Image();
-        this._img.crossOrigin = 'Anonymous';
+        if (!imageUri.match(/^data:/)) {
+          this._img.crossOrigin = 'Anonymous';
+        }
         this._img.onload = function () {
           var gl = _this2._glContext.gl;
           var glem = GLExtensionsManager.getInstance(_this2._glContext);
 
-          _this2._width = _this2._img.width;
-          _this2._height = _this2._img.height;
+          var imgCanvas = _this2._getResizedCanvas(_this2._img);
+          _this2._width = imgCanvas.width;
+          _this2._height = imgCanvas.height;
 
           var texture = _this2._glContext.createTexture(_this2);
           gl.bindTexture(gl.TEXTURE_2D, texture);
 
-          gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, _this2._getParameter('flipY'));
-          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, _this2._img);
+          gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, _this2._getParamWithAlternative('UNPACK_FLIP_Y_WEBGL', false));
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, imgCanvas);
 
-          if (_this2._isPowerOfTwo(_this2._width) && _this2._isPowerOfTwo(_this2._height)) {
-            if (glem.extTFA) {
-              gl.texParameteri(gl.TEXTURE_2D, glem.extTFA.TEXTURE_MAX_ANISOTROPY_EXT, 4);
-            }
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-            gl.generateMipmap(gl.TEXTURE_2D);
-          } else {
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+          if (glem.extTFA) {
+            gl.texParameteri(gl.TEXTURE_2D, glem.extTFA.TEXTURE_MAX_ANISOTROPY_EXT, 4);
           }
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, _this2._getParamWithAlternative('TEXTURE_MAG_FILTER', gl.LINEAR));
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, _this2._getParamWithAlternative('TEXTURE_MIN_FILTER', gl.LINEAR_MIPMAP_LINEAR));
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, _this2._getParamWithAlternative('TEXTURE_WRAP_S', gl.REPEAT));
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, _this2._getParamWithAlternative('TEXTURE_WRAP_T', gl.REPEAT));
+          gl.generateMipmap(gl.TEXTURE_2D);
+
           gl.bindTexture(gl.TEXTURE_2D, null);
 
           _this2._texture = texture;
@@ -5900,26 +7349,23 @@
         var gl = this.this._glContext.gl;
         var glem = GLExtensionsManager.getInstance(this._glContext);
 
-        this._width = imageData.width;
-        this._height = imageData.height;
+        var imgCanvas = this._getResizedCanvas(imageData);
+        this._width = imgCanvas.width;
+        this._height = imgCanvas.height;
         var texture = this._glContext.createTexture(this);
         gl.bindTexture(gl.TEXTURE_2D, texture);
         //gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
-        if (this._isPowerOfTwo(this._width) && this._isPowerOfTwo(this._height)) {
-          if (glem.extTFA) {
-            gl.texParameteri(gl.TEXTURE_2D, glem.extTFA.TEXTURE_MAX_ANISOTROPY_EXT, 4);
-          }
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-          gl.generateMipmap(gl.TEXTURE_2D);
-        } else {
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, imgCanvas);
+
+        if (glem.extTFA) {
+          gl.texParameteri(gl.TEXTURE_2D, glem.extTFA.TEXTURE_MAX_ANISOTROPY_EXT, 4);
         }
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, this._getParamWithAlternative('TEXTURE_MAG_FILTER', gl.LINEAR));
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this._getParamWithAlternative('TEXTURE_MIN_FILTER', gl.LINEAR_MIPMAP_LINEAR));
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, this._getParamWithAlternative('TEXTURE_WRAP_S', gl.REPEAT));
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, this._getParamWithAlternative('TEXTURE_WRAP_T', gl.REPEAT));
+        gl.generateMipmap(gl.TEXTURE_2D);
+
         gl.bindTexture(gl.TEXTURE_2D, null);
 
         this._texture = texture;
@@ -6247,7 +7693,7 @@
               babelHelpers.get(Object.getPrototypeOf(ParticleShader.prototype), 'setUniforms', this).call(this, gl, glslProgram, material, camera, mesh);
 
               if (this._cameraProjectionUpdateCount !== mesh.updateCountAsCameraProjection) {
-                gl.uniformMatrix4fv(glslProgram.projectionMatrix, false, camera.perspectiveRHMatrix().flatten());
+                gl.uniformMatrix4fv(glslProgram.projectionMatrix, false, camera.projectionRHMatrix().flatten());
               }
 
               if (this._cameraViewUpdateCount !== mesh.updateCountAsCameraView || this._meshTransformUpdateCount !== mesh.updateCountAsElement) {
@@ -6382,17 +7828,18 @@
     babelHelpers.inherits(Plane, _Geometry);
 
     function Plane(glBoostContext, width, height, uSpan, vSpan, customVertexAttributes) {
+      var isUVRepeat = arguments.length <= 6 || arguments[6] === undefined ? false : arguments[6];
       babelHelpers.classCallCheck(this, Plane);
 
       var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Plane).call(this, glBoostContext));
 
-      _this._setupVertexData(width, height, uSpan, vSpan, customVertexAttributes);
+      _this._setupVertexData(width, height, uSpan, vSpan, customVertexAttributes, isUVRepeat);
       return _this;
     }
 
     babelHelpers.createClass(Plane, [{
       key: '_setupVertexData',
-      value: function _setupVertexData(width, height, uSpan, vSpan, customVertexAttributes) {
+      value: function _setupVertexData(width, height, uSpan, vSpan, customVertexAttributes, isUVRepeat) {
 
         var positions = [];
 
@@ -6430,7 +7877,11 @@
         var texcoords = [];
         for (var i = 0; i <= vSpan; i++) {
           for (var j = 0; j <= uSpan; j++) {
-            texcoords.push(new Vector2(j / uSpan, 1.0 - i / vSpan));
+            if (isUVRepeat) {
+              texcoords.push(new Vector2(j, 1.0 - i));
+            } else {
+              texcoords.push(new Vector2(j / uSpan, 1.0 - i / vSpan));
+            }
           }
         }
 
@@ -6524,281 +7975,6 @@
 
   GLBoost$1["Cube"] = Cube;
 
-  var SkeletalShaderSource = function () {
-    function SkeletalShaderSource() {
-      babelHelpers.classCallCheck(this, SkeletalShaderSource);
-    }
-
-    babelHelpers.createClass(SkeletalShaderSource, [{
-      key: 'VSDefine_SkeletalShaderSource',
-      value: function VSDefine_SkeletalShaderSource(in_, out_, f, lights, extraData) {
-        var shaderText = '';
-        shaderText += in_ + ' vec4 aVertex_joint;\n';
-        shaderText += in_ + ' vec4 aVertex_weight;\n';
-        shaderText += 'uniform mat4 skinTransformMatrices[' + extraData.jointN + '];\n';
-        return shaderText;
-      }
-    }, {
-      key: 'VSTransform_SkeletalShaderSource',
-      value: function VSTransform_SkeletalShaderSource(existCamera_f, f, lights, extraData) {
-        var shaderText = '';
-        shaderText += 'gl_Position = aVertex_joint + aVertex_weight;\n';
-
-        shaderText += 'mat4 skinMat = aVertex_weight.x * skinTransformMatrices[int(aVertex_joint.x)];\n';
-        shaderText += 'skinMat += aVertex_weight.y * skinTransformMatrices[int(aVertex_joint.y)];\n';
-        shaderText += 'skinMat += aVertex_weight.z * skinTransformMatrices[int(aVertex_joint.z)];\n';
-        shaderText += 'skinMat += aVertex_weight.w * skinTransformMatrices[int(aVertex_joint.w)];\n';
-
-        if (existCamera_f) {
-          shaderText += '  gl_Position = pvwMatrix * skinMat * vec4(aVertex_position, 1.0);\n';
-        } else {
-          shaderText += '  gl_Position = skinMat * vec4(aVertex_position, 1.0);\n';
-        }
-        return shaderText;
-      }
-    }, {
-      key: 'prepare_SkeletalShaderSource',
-      value: function prepare_SkeletalShaderSource(gl, shaderProgram, vertexAttribs, existCamera_f, lights, extraData, canvas) {
-        var vertexAttribsAsResult = [];
-
-        vertexAttribs.forEach(function (attribName) {
-          if (attribName === GLBoost.JOINT || attribName === GLBoost.WEIGHT) {
-            vertexAttribsAsResult.push(attribName);
-            shaderProgram['vertexAttribute_' + attribName] = gl.getAttribLocation(shaderProgram, 'aVertex_' + attribName);
-            gl.enableVertexAttribArray(shaderProgram['vertexAttribute_' + attribName]);
-          }
-        });
-
-        shaderProgram['skinTransformMatrices'] = gl.getUniformLocation(shaderProgram, 'skinTransformMatrices');
-        // とりあえず単位行列で初期化
-        var identityMatrices = [];
-        for (var i = 0; i < extraData.jointN; i++) {
-          Array.prototype.push.apply(identityMatrices, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-        }
-        gl.uniformMatrix4fv(shaderProgram['skinTransformMatrices'], false, new Float32Array(identityMatrices));
-
-        return vertexAttribsAsResult;
-      }
-    }]);
-    return SkeletalShaderSource;
-  }();
-
-  var SkeletalGeometry = function (_Geometry) {
-    babelHelpers.inherits(SkeletalGeometry, _Geometry);
-
-    function SkeletalGeometry(glBoostContext) {
-      babelHelpers.classCallCheck(this, SkeletalGeometry);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(SkeletalGeometry).call(this, glBoostContext));
-    }
-
-    babelHelpers.createClass(SkeletalGeometry, [{
-      key: 'draw',
-      value: function draw(lights, camera, skeletalMesh, scene, renderPass_index) {
-        var gl = this._glContext.gl;
-        if (this._materials.length > 0) {
-          var materials = this._materials;
-        } else if (skeletalMesh.material) {
-          var materials = [skeletalMesh.material];
-        } else {
-          var materials = [];
-        }
-
-        var calcParentJointsMatricesRecursively = function calcParentJointsMatricesRecursively(joint) {
-          var children = joint.parent.parent.getChildren();
-          var parentJoint = null;
-          for (var i = 0; i < children.length; i++) {
-            if (children[i] instanceof Joint) {
-              parentJoint = children[i];
-            }
-          }
-
-          var results = [];
-          if (parentJoint) {
-            var result = calcParentJointsMatricesRecursively(parentJoint);
-            if (Array.isArray(result)) {
-              Array.prototype.push.apply(results, result);
-            }
-
-            results.push(parentJoint);
-
-            return results;
-          }
-
-          return null;
-        };
-
-        var joints = skeletalMesh.jointsHierarchy.searchElementsByType(Joint);
-        var matrices = [];
-
-        for (var i = 0; i < joints.length; i++) {
-
-          var jointsHierarchy = calcParentJointsMatricesRecursively(joints[i]);
-          if (jointsHierarchy == null) {
-            jointsHierarchy = [];
-          }
-          jointsHierarchy.push(joints[i]);
-          //console.log(jointsHierarchy);
-          var tempMatrices = [];
-
-          var mapTable = [];
-          for (var j = 0; j < jointsHierarchy.length; j++) {
-            for (var k = 0; k < joints.length; k++) {
-              if (jointsHierarchy[j].userFlavorName === joints[k].userFlavorName) {
-                mapTable[j] = k;
-              }
-            }
-          }
-          for (var j = 0; j < jointsHierarchy.length; j++) {
-
-            var thisLoopMatrix = null;
-
-            var pivotJoint = joints[mapTable[j]];
-            var rotateMatrix = null;
-            //let basicRotateMat = Matrix44.multiply(Matrix44.invert(jointsHierarchy[j].parent.transformMatrixOnlyRotate), (joints[mapTable[j]].inverceMatrix));
-            //let basicRotateMat = Matrix44.multiply(Matrix44.invert(jointsHierarchy[j].parent.transformMatrixOnlyRotate), Matrix44.invert(joints[mapTable[j]].inverceMatrix));
-            var basicRotateMat = Matrix44.multiply(Matrix44.invert(jointsHierarchy[j].parent.transformMatrixOnlyRotate), Matrix44.invert(joints[mapTable[j]].inverceMatrix));
-            if (j > 0) {
-              //let parentMat = Matrix44.multiply(basicRotateMat, jointsHierarchy[j-1].parent.transformMatrixOnlyRotate);
-              var parentMat = Matrix44.multiply(Matrix44.multiply(Matrix44.invert(jointsHierarchy[j - 1].parent.transformMatrixOnlyRotate), Matrix44.invert(joints[mapTable[j - 1]].inverceMatrix)), basicRotateMat);
-
-              rotateMatrix = Matrix44.multiply(Matrix44.multiply(jointsHierarchy[j].parent.transformMatrixOnlyRotate, joints[mapTable[j]].inverceMatrix), Matrix44.invert(parentMat));
-            } else {
-              rotateMatrix = Matrix44.multiply(jointsHierarchy[j].parent.transformMatrixOnlyRotate, joints[mapTable[j]].inverceMatrix);
-            }
-            //let rotateMatrix = jointsHierarchy[j].parent.transformMatrixOnlyRotate;
-            thisLoopMatrix = Matrix44.multiply(Matrix44.invert(skeletalMesh.inverseBindMatrices[mapTable[j]]), Matrix44.multiply(rotateMatrix, skeletalMesh.inverseBindMatrices[mapTable[j]]));
-            if (j > 0) {
-              tempMatrices[j] = Matrix44.multiply(tempMatrices[j - 1], thisLoopMatrix);
-            } else {
-              tempMatrices[j] = thisLoopMatrix;
-            }
-          }
-          matrices[i] = tempMatrices[jointsHierarchy.length - 1];
-        }
-        var flatMatrices = [];
-        for (var i = 0; i < matrices.length; i++) {
-          Array.prototype.push.apply(flatMatrices, matrices[i].flattenAsArray());
-        }
-        if (matrices.length < 4) {
-          var identityMatrices = [];
-          for (var i = 0; i < 4 - matrices.length; i++) {
-            Array.prototype.push.apply(identityMatrices, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-          }
-          Array.prototype.push.apply(flatMatrices, identityMatrices);
-        }
-
-        for (var i = 0; i < materials.length; i++) {
-          var glslProgram = materials[i].shaderInstance.glslProgram;
-          gl.uniformMatrix4fv(glslProgram.skinTransformMatrices, false, new Float32Array(flatMatrices));
-        }
-
-        babelHelpers.get(Object.getPrototypeOf(SkeletalGeometry.prototype), 'draw', this).call(this, lights, camera, skeletalMesh, scene, renderPass_index);
-      }
-    }, {
-      key: 'prepareToRender',
-      value: function prepareToRender(existCamera_f, pointLight, meshMaterial, skeletalMesh) {
-        // before prepareForRender of 'Geometry' class, a new 'BlendShapeShader'(which extends default shader) is assigned.
-        var canvas = this._canvas;
-
-        if (this._materials.length > 0) {
-          this._materialForSkeletal = this._materials[0];
-        } else if (meshMaterial) {
-          this._materialForSkeletal = meshMaterial;
-        } else {
-          this._materialForSkeletal = this._defaultMaterial;
-        }
-
-        var SkeletalShader = function (_materialForSkeletal$) {
-          babelHelpers.inherits(SkeletalShader, _materialForSkeletal$);
-
-          function SkeletalShader(glBoostContext, basicShader) {
-            babelHelpers.classCallCheck(this, SkeletalShader);
-
-            var _this2 = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(SkeletalShader).call(this, glBoostContext, basicShader));
-
-            SkeletalShader.mixin(SkeletalShaderSource);
-            return _this2;
-          }
-
-          return SkeletalShader;
-        }(this._materialForSkeletal.shaderClass);
-
-        if (this._materials.length > 0) {
-          for (var i = 0; i < this._materials.length; i++) {
-            this._materials[i].shaderClass = SkeletalShader;
-          }
-        } else if (meshMaterial) {
-          meshMaterial.shaderClass = SkeletalShader;
-        } else {
-          this._defaultMaterial.shaderClass = SkeletalShader;
-        }
-
-        var joints = skeletalMesh.jointsHierarchy.searchElementsByType(Joint);
-        for (var i = 0; i < joints.length; i++) {
-          //skeletalMesh.inverseBindMatrices[i] = Matrix44.invert(joints[i].transformMatrixAccumulatedAncestry);
-          var matrix = joints[i].parent.transformMatrixOnlyRotateOnInit;
-          joints[i].inverceMatrix = Matrix44.invert(matrix);
-          //joints[i].inverceMatrix = Matrix44.identity();
-        }
-
-        /*
-        var calcParentJointsMatricesRecursively = (joint)=> {
-          let children = joint.parent.parent._children;
-          let parentJoint = null;
-          for (let i=0; i<children.length; i++) {
-            if (children[i] instanceof Joint) {
-              parentJoint = children[i];
-            }
-          }
-           let results = [];
-          if (parentJoint) {
-            let result = calcParentJointsMatricesRecursively(parentJoint);
-            if (Array.isArray(result)) {
-              Array.prototype.push.apply(results, result);
-            }
-             results.push(parentJoint);
-             return results;
-          }
-           return null;
-        };
-         var joints = skeletalMesh.jointsHierarchy.searchElementsByType(Joint);
-        var matrices = [];
-         for (let i=0; i<joints.length; i++) {
-           let jointsHierarchy = calcParentJointsMatricesRecursively(joints[i]);
-          if (jointsHierarchy == null) {
-            jointsHierarchy = [];
-          }
-          jointsHierarchy.push(joints[i]);
-          //console.log(jointsHierarchy);
-          let tempMatrices = [];
-            let mapTable = [];
-          for (let j = 0; j < jointsHierarchy.length; j++) {
-            for (let k = 0; k < joints.length; k++) {
-              if (jointsHierarchy[j].userFlavorName === joints[k].userFlavorName) {
-                mapTable[j] = k;
-              }
-            }
-          }
-          for (let j = 0; j < jointsHierarchy.length; j++) {
-             let thisLoopMatrix = null;
-             thisLoopMatrix = joints[mapTable[j]].parent.transformMatrixOnlyRotateOnInit;
-            if (j > 0) {
-              tempMatrices[j] = Matrix44.multiply(tempMatrices[j - 1], thisLoopMatrix);
-            } else {
-              tempMatrices[j] = thisLoopMatrix;
-            }
-          }
-          joints[i].inverceMatrix = Matrix44.invert(tempMatrices[jointsHierarchy.length - 1]);
-         }
-        */
-        babelHelpers.get(Object.getPrototypeOf(SkeletalGeometry.prototype), 'prepareToRender', this).call(this, existCamera_f, pointLight, meshMaterial, skeletalMesh);
-      }
-    }]);
-    return SkeletalGeometry;
-  }(Geometry);
-
-  GLBoost$1['SkeletalGeometry'] = SkeletalGeometry;
-
   var BlendShapeShaderSource = function () {
     function BlendShapeShaderSource() {
       babelHelpers.classCallCheck(this, BlendShapeShaderSource);
@@ -6820,7 +7996,7 @@
       }
     }, {
       key: 'VSTransform_BlendShapeShaderSource',
-      value: function VSTransform_BlendShapeShaderSource(existCamera_f, f, lights, extraData) {
+      value: function VSTransform_BlendShapeShaderSource(existCamera_f, f, lights, material, extraData) {
         var _this2 = this;
 
         var shaderText = '';
@@ -7128,19 +8304,14 @@
         return new BlendShapeGeometry(this);
       }
     }, {
-      key: 'createSkeletalGeometry',
-      value: function createSkeletalGeometry() {
-        return new SkeletalGeometry(this);
-      }
-    }, {
       key: 'createCube',
       value: function createCube(widthVector, vertexColor) {
         return new Cube(this, widthVector, vertexColor);
       }
     }, {
       key: 'createPlane',
-      value: function createPlane(width, height, uSpan, vSpan, customVertexAttributes) {
-        return new Plane(this, width, height, uSpan, vSpan, customVertexAttributes);
+      value: function createPlane(width, height, uSpan, vSpan, customVertexAttributes, isUVRepeat) {
+        return new Plane(this, width, height, uSpan, vSpan, customVertexAttributes, isUVRepeat);
       }
     }, {
       key: 'createSphere',
@@ -7158,9 +8329,14 @@
         return new ClassicMaterial(this);
       }
     }, {
-      key: 'createCamera',
-      value: function createCamera(lookat, perspective) {
-        return new Camera(this, lookat, perspective);
+      key: 'createPerspectiveCamera',
+      value: function createPerspectiveCamera(lookat, perspective) {
+        return new L_PerspectiveCamera(this, true, lookat, perspective);
+      }
+    }, {
+      key: 'createOrthoCamera',
+      value: function createOrthoCamera(lookat, ortho) {
+        return new L_OrthoCamera(this, true, lookat, ortho);
       }
     }, {
       key: 'createTexture',
@@ -7168,21 +8344,6 @@
         var parameters = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
 
         return new Texture(this, src, parameters);
-      }
-    }, {
-      key: 'createDirectionalLight',
-      value: function createDirectionalLight(intensity, direction) {
-        return new DirectionalLight(this, intensity, direction);
-      }
-    }, {
-      key: 'createPointLight',
-      value: function createPointLight(intensity) {
-        return new PointLight(this, intensity);
-      }
-    }, {
-      key: 'createJoint',
-      value: function createJoint() {
-        return new Joint(this);
       }
 
       /**
@@ -7226,7 +8387,7 @@
         renderTargetTextures.forEach(function (texture, i) {
           var glTexture = texture.glTextureResource;
           var attachimentId = glem.colorAttachiment(gl, i);
-          texture.colorAttachiment = attachimentId;
+          texture.colorAttachment = attachimentId;
           gl.framebufferTexture2D(gl.FRAMEBUFFER, attachimentId, gl.TEXTURE_2D, glTexture, 0);
         });
         gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, renderbuffer);
@@ -7251,13 +8412,23 @@
         fbo.width = width ? width : canvas.width;
         fbo.height = height ? height : canvas.height;
 
-        var depthTexture = new MutableTexture(this, fbo.width, fbo.height);
+        // Create color RenderBuffer
+        var colorBuffer = gl.createRenderbuffer();
+        gl.bindRenderbuffer(gl.RENDERBUFFER, colorBuffer);
+        gl.renderbufferStorage(gl.RENDERBUFFER, gl.RGBA4, fbo.width, fbo.width);
+
+        // Create MutableTexture for Depth Texture
+        var depthTexture = new MutableTexture(this, fbo.width, fbo.height, 0, gl.DEPTH_COMPONENT, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, gl.NEAREST, gl.NEAREST, gl.CLAMP_TO_EDGE, gl.CLAMP_TO_EDGE);
         depthTexture.fbo = fbo;
 
-        // Attach Buffers
+        /// Attach Buffers
+        // color
+        gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.RENDERBUFFER, colorBuffer);
+
+        // depth
         var glTexture = depthTexture.glTextureResource;
         var attachimentId = gl.DEPTH_ATTACHMENT;
-        depthTexture.colorAttachment = attachimentId;
+        depthTexture.depthAttachment = attachimentId;
         gl.framebufferTexture2D(gl.FRAMEBUFFER, attachimentId, gl.TEXTURE_2D, glTexture, 0);
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -7280,8 +8451,8 @@
 
   GLBoost['GLBoostLowContext'] = GLBoostLowContext;
 
-  var GLBoostMiddleContext = function (_GLBoostContext) {
-    babelHelpers.inherits(GLBoostMiddleContext, _GLBoostContext);
+  var GLBoostMiddleContext = function (_GLBoostLowContext) {
+    babelHelpers.inherits(GLBoostMiddleContext, _GLBoostLowContext);
 
     function GLBoostMiddleContext(canvas) {
       babelHelpers.classCallCheck(this, GLBoostMiddleContext);
@@ -7291,22 +8462,27 @@
     babelHelpers.createClass(GLBoostMiddleContext, [{
       key: 'createScene',
       value: function createScene() {
-        return new Scene(this);
+        return new M_Scene(this);
       }
     }, {
       key: 'createGroup',
       value: function createGroup() {
-        return new Group(this);
+        return new M_Group(this);
       }
     }, {
       key: 'createMesh',
       value: function createMesh(geometry, material) {
-        return new Mesh(this, geometry, material);
+        return new M_Mesh(this, geometry, material);
       }
     }, {
       key: 'createSkeletalMesh',
       value: function createSkeletalMesh(geometry, material, rootJointName) {
-        return new SkeletalMesh(this, geometry, material, rootJointName);
+        return new M_SkeletalMesh(this, geometry, material, rootJointName);
+      }
+    }, {
+      key: 'createSkeletalGeometry',
+      value: function createSkeletalGeometry() {
+        return new M_SkeletalGeometry(this);
       }
     }, {
       key: 'createRenderer',
@@ -7314,23 +8490,53 @@
         return new Renderer(this, parameters);
       }
     }, {
-      key: 'createExpressionAndRenderPaths',
-      value: function createExpressionAndRenderPaths(number) {
+      key: 'createExpression',
+      value: function createExpression() {
+        return this.createExpressionAndRenderPasses(1);
+      }
+    }, {
+      key: 'createExpressionAndRenderPasses',
+      value: function createExpressionAndRenderPasses(number) {
         var expression = new Expression(this);
-        var renderPaths = this.createRenderPaths(number);
-        expression.addRenderPaths(renderPaths);
+        var renderPasses = this.createRenderPasses(number);
+        expression.addRenderPasses(renderPasses);
 
         return expression;
       }
     }, {
-      key: 'createRenderPaths',
-      value: function createRenderPaths(number) {
-        var renderPaths = [];
+      key: 'createRenderPasses',
+      value: function createRenderPasses(number) {
+        var renderPasses = [];
         for (var i = 0; i < number; i++) {
-          renderPaths.push(new RenderPath(this));
+          renderPasses.push(new RenderPass(this));
         }
 
-        return renderPaths;
+        return renderPasses;
+      }
+    }, {
+      key: 'createPerspectiveCamera',
+      value: function createPerspectiveCamera(lookat, perspective) {
+        return new M_PerspectiveCamera(this, true, lookat, perspective);
+      }
+    }, {
+      key: 'createOrthoCamera',
+      value: function createOrthoCamera(lookat, ortho) {
+        return new M_OrthoCamera(this, true, lookat, ortho);
+      }
+    }, {
+      key: 'createDirectionalLight',
+      value: function createDirectionalLight(intensity, direction) {
+        return new M_DirectionalLight(this, intensity, direction);
+      }
+    }, {
+      key: 'createPointLight',
+      value: function createPointLight(intensity) {
+        return new M_PointLight(this, intensity);
+      }
+    }, {
+      key: 'createJoint',
+      value: function createJoint() {
+        return new M_Joint(this);
       }
     }]);
     return GLBoostMiddleContext;
@@ -7372,23 +8578,16 @@
         shaderText += '    float specular = pow(max(dot(light, reflect), 0.0), power);\n';
         shaderText += '    rt0 += Ks * lightDiffuse[i] * vec4(specular, specular, specular, 0.0);\n';
         shaderText += '  }\n';
+        //    shaderText += '  rt0 *= (1.0 - shadowRatio);\n';
         //shaderText += '  rt0.a = 1.0;\n';
-        //shaderText += '  rt0 = vec4(position.xyz, 1.0);\n';
 
         return shaderText;
       }
     }, {
       key: 'prepare_PhongShaderSource',
-      value: function prepare_PhongShaderSource(gl, shaderProgram, vertexAttribs, existCamera_f, lights, extraData, canvas) {
+      value: function prepare_PhongShaderSource(gl, shaderProgram, vertexAttribs, existCamera_f, lights, material, extraData, canvas) {
 
         var vertexAttribsAsResult = [];
-        vertexAttribs.forEach(function (attribName) {
-          if (attribName === GLBoost.NORMAL) {
-            shaderProgram['vertexAttribute_' + attribName] = gl.getAttribLocation(shaderProgram, 'aVertex_' + attribName);
-            gl.enableVertexAttribArray(shaderProgram['vertexAttribute_' + attribName]);
-            vertexAttribsAsResult.push(attribName);
-          }
-        });
 
         shaderProgram.Kd = gl.getUniformLocation(shaderProgram, 'Kd');
         shaderProgram.Ks = gl.getUniformLocation(shaderProgram, 'Ks');
@@ -7457,167 +8656,6 @@
   }(DecalShader);
 
   GLBoost['PhongShader'] = PhongShader;
-
-  var LambertShaderSource = function () {
-    function LambertShaderSource() {
-      babelHelpers.classCallCheck(this, LambertShaderSource);
-    }
-
-    babelHelpers.createClass(LambertShaderSource, [{
-      key: 'FSDefine_LambertShaderSource',
-      value: function FSDefine_LambertShaderSource(in_, f, lights) {
-        var shaderText = '';
-        shaderText += 'uniform vec4 Kd;\n';
-
-        return shaderText;
-      }
-    }, {
-      key: 'FSShade_LambertShaderSource',
-      value: function FSShade_LambertShaderSource(f, gl, lights) {
-        var shaderText = '';
-
-        shaderText += '  vec4 surfaceColor = rt0;\n';
-        shaderText += '  rt0 = vec4(0.0, 0.0, 0.0, 0.0);\n';
-        shaderText += '  vec3 normal = normalize(v_normal);\n';
-
-        shaderText += '  for (int i=0; i<' + lights.length + '; i++) {\n';
-        // if PointLight: lightPosition[i].w === 1.0      if DirectionalLight: lightPosition[i].w === 0.0
-        shaderText += '    vec3 light = normalize(lightPosition[i].xyz - position.xyz * lightPosition[i].w);\n';
-        shaderText += '    float diffuse = max(dot(light, normal), 0.0);\n';
-        shaderText += '    rt0 += Kd * lightDiffuse[i] * vec4(diffuse, diffuse, diffuse, 1.0) * surfaceColor;\n';
-        shaderText += '  }\n';
-        //shaderText += '  rt0.a = 1.0;\n';
-        //shaderText += '  rt0 = vec4(position.xyz, 1.0);\n';
-
-        return shaderText;
-      }
-    }, {
-      key: 'prepare_LambertShaderSource',
-      value: function prepare_LambertShaderSource(gl, shaderProgram, vertexAttribs, existCamera_f, lights, extraData, canvas) {
-
-        var vertexAttribsAsResult = [];
-        vertexAttribs.forEach(function (attribName) {
-          if (attribName === GLBoost.NORMAL) {
-            shaderProgram['vertexAttribute_' + attribName] = gl.getAttribLocation(shaderProgram, 'aVertex_' + attribName);
-            gl.enableVertexAttribArray(shaderProgram['vertexAttribute_' + attribName]);
-            vertexAttribsAsResult.push(attribName);
-          }
-        });
-
-        shaderProgram.Kd = gl.getUniformLocation(shaderProgram, 'Kd');
-
-        return vertexAttribsAsResult;
-      }
-    }]);
-    return LambertShaderSource;
-  }();
-
-  var LambertShader = function (_DecalShader) {
-    babelHelpers.inherits(LambertShader, _DecalShader);
-
-    function LambertShader(glBoostContext, basicShader) {
-      babelHelpers.classCallCheck(this, LambertShader);
-
-      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(LambertShader).call(this, glBoostContext, basicShader));
-
-      LambertShader.mixin(LambertShaderSource);
-      return _this;
-    }
-
-    babelHelpers.createClass(LambertShader, [{
-      key: 'setUniforms',
-      value: function setUniforms(gl, glslProgram, material) {
-        babelHelpers.get(Object.getPrototypeOf(LambertShader.prototype), 'setUniforms', this).call(this, gl, glslProgram, material);
-
-        var Kd = material.diffuseColor;
-        gl.uniform4f(glslProgram.Kd, Kd.x, Kd.y, Kd.z, Kd.w);
-      }
-    }]);
-    return LambertShader;
-  }(DecalShader);
-
-  GLBoost['LambertShader'] = LambertShader;
-
-  var HalfLambertShaderSource = function () {
-    function HalfLambertShaderSource() {
-      babelHelpers.classCallCheck(this, HalfLambertShaderSource);
-    }
-
-    babelHelpers.createClass(HalfLambertShaderSource, [{
-      key: 'FSDefine_HalfLambertShaderSource',
-      value: function FSDefine_HalfLambertShaderSource(in_, f, lights) {
-        var shaderText = '';
-        shaderText += 'uniform vec4 Kd;\n';
-
-        return shaderText;
-      }
-    }, {
-      key: 'FSShade_HalfLambertShaderSource',
-      value: function FSShade_HalfLambertShaderSource(f, gl, lights) {
-        var shaderText = '';
-
-        shaderText += '  vec4 surfaceColor = rt0;\n';
-        shaderText += '  rt0 = vec4(0.0, 0.0, 0.0, 0.0);\n';
-        shaderText += '  vec3 normal = normalize(v_normal);\n';
-
-        shaderText += '  for (int i=0; i<' + lights.length + '; i++) {\n';
-        // if PointLight: lightPosition[i].w === 1.0      if DirectionalLight: lightPosition[i].w === 0.0
-        shaderText += '    vec3 light = normalize(lightPosition[i].xyz - position.xyz * lightPosition[i].w);\n';
-        shaderText += '    float halfLambert = max(dot(light, normal), 0.0)*0.5+0.5;\n';
-        shaderText += '    float diffuse = halfLambert*halfLambert;\n';
-        shaderText += '    rt0 += Kd * lightDiffuse[i] * vec4(diffuse, diffuse, diffuse, 1.0) * surfaceColor;\n';
-        shaderText += '  }\n';
-        //shaderText += '  rt0.a = 1.0;\n';
-        //shaderText += '  rt0 = vec4(position.xyz, 1.0);\n';
-
-        return shaderText;
-      }
-    }, {
-      key: 'prepare_HalfLambertShaderSource',
-      value: function prepare_HalfLambertShaderSource(gl, shaderProgram, vertexAttribs, existCamera_f, lights, extraData, canvas) {
-
-        var vertexAttribsAsResult = [];
-        vertexAttribs.forEach(function (attribName) {
-          if (attribName === GLBoost.NORMAL) {
-            shaderProgram['vertexAttribute_' + attribName] = gl.getAttribLocation(shaderProgram, 'aVertex_' + attribName);
-            gl.enableVertexAttribArray(shaderProgram['vertexAttribute_' + attribName]);
-            vertexAttribsAsResult.push(attribName);
-          }
-        });
-
-        shaderProgram.Kd = gl.getUniformLocation(shaderProgram, 'Kd');
-
-        return vertexAttribsAsResult;
-      }
-    }]);
-    return HalfLambertShaderSource;
-  }();
-
-  var HalfLambertShader = function (_DecalShader) {
-    babelHelpers.inherits(HalfLambertShader, _DecalShader);
-
-    function HalfLambertShader(glBoostContext, basicShader) {
-      babelHelpers.classCallCheck(this, HalfLambertShader);
-
-      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(HalfLambertShader).call(this, glBoostContext, basicShader));
-
-      HalfLambertShader.mixin(HalfLambertShaderSource);
-      return _this;
-    }
-
-    babelHelpers.createClass(HalfLambertShader, [{
-      key: 'setUniforms',
-      value: function setUniforms(gl, glslProgram, material) {
-        babelHelpers.get(Object.getPrototypeOf(HalfLambertShader.prototype), 'setUniforms', this).call(this, gl, glslProgram, material);
-
-        var Kd = material.diffuseColor;
-        gl.uniform4f(glslProgram.Kd, Kd.x, Kd.y, Kd.z, Kd.w);
-      }
-    }]);
-    return HalfLambertShader;
-  }(DecalShader);
-
-  GLBoost['HalfLambertShader'] = HalfLambertShader;
 
   var singleton = Symbol();
   var singletonEnforcer = Symbol();
@@ -7753,7 +8791,7 @@
 
           if (matchArray[1].toLowerCase() === "map_kd") {
             matchArray = mtlTextRows[i].match(/(\w+) ([\w:\/\-\.]+)/);
-            var texture = glBoostContext.createTexture(basePath + matchArray[2], { flipY: true });
+            var texture = glBoostContext.createTexture(basePath + matchArray[2], { 'UNPACK_FLIP_Y_WEBGL': true });
             texture.name = matchArray[2];
             materials[iMCount].diffuseTexture = texture;
           }
@@ -8293,6 +9331,28 @@
   GLBoost$1['WEBGL_ONE_USE_EXTENSIONS'] = true;
   GLBoost$1['CONSOLE_OUT_FOR_DEBUGGING'] = true;
 
+  var DataUtil = function () {
+    function DataUtil() {
+      babelHelpers.classCallCheck(this, DataUtil);
+    }
+
+    babelHelpers.createClass(DataUtil, null, [{
+      key: 'base64ToArrayBuffer',
+      value: function base64ToArrayBuffer(dataUri) {
+        var type = dataUri[0].split(':')[1].split(';')[0];
+        var byteString = atob(dataUri[1]);
+        var byteStringLength = byteString.length;
+        var arrayBuffer = new ArrayBuffer(byteStringLength);
+        var uint8Array = new Uint8Array(arrayBuffer);
+        for (var i = 0; i < byteStringLength; i++) {
+          uint8Array[i] = byteString.charCodeAt(i);
+        }
+        return arrayBuffer;
+      }
+    }]);
+    return DataUtil;
+  }();
+
   var singleton$1 = Symbol();
   var singletonEnforcer$1 = Symbol();
 
@@ -8379,16 +9439,9 @@
       }
     }, {
       key: '_loadBinaryFile',
-      value: function _loadBinaryFile(glBoostContext, dataUrI, basePath, json, canvas, scale, defaultShader, resolve) {
-        dataUrI = dataUrI.split(',');
-        var type = dataUrI[0].split(':')[1].split(';')[0];
-        var byteString = atob(dataUrI[1]);
-        var byteStringLength = byteString.length;
-        var arrayBuffer = new ArrayBuffer(byteStringLength);
-        var intArray = new Uint8Array(arrayBuffer);
-        for (var i = 0; i < byteStringLength; i++) {
-          intArray[i] = byteString.charCodeAt(i);
-        }
+      value: function _loadBinaryFile(glBoostContext, dataUri, basePath, json, canvas, scale, defaultShader, resolve) {
+        dataUri = dataUri.split(',');
+        var arrayBuffer = DataUtil.base64ToArrayBuffer(dataUri);
 
         if (arrayBuffer) {
           this._IterateNodeOfScene(glBoostContext, arrayBuffer, basePath, json, canvas, scale, defaultShader, resolve);
@@ -8416,7 +9469,8 @@
     }, {
       key: '_IterateNodeOfScene',
       value: function _IterateNodeOfScene(glBoostContext, arrayBuffer, basePath, json, canvas, scale, defaultShader, resolve) {
-        var sceneJson = json.scenes.defaultScene;
+        var sceneStr = json.scene;
+        var sceneJson = json.scenes[sceneStr];
 
         var group = glBoostContext.createGroup();
         group.userFlavorName = 'TopGroup';
@@ -8430,7 +9484,7 @@
         }
 
         // register joints hierarchy to skeletal mesh
-        var skeletalMeshes = group.searchElementsByType(SkeletalMesh);
+        var skeletalMeshes = group.searchElementsByType(M_SkeletalMesh);
         skeletalMeshes.forEach(function (skeletalMesh) {
           var rootJoint = group.searchElement(skeletalMesh.rootJointName);
           skeletalMesh.jointsHierarchy = rootJoint;
@@ -8462,19 +9516,21 @@
         }
 
         if (nodeJson.meshes) {
-          // this node has mashes...
-          var meshStr = nodeJson.meshes[0];
-          var meshJson = json.meshes[meshStr];
+          for (var i = 0; i < nodeJson.meshes.length; i++) {
+            // this node has mashes...
+            var meshStr = nodeJson.meshes[i];
+            var meshJson = json.meshes[meshStr];
 
-          var rootJointStr = null;
-          var skinStr = null;
-          if (nodeJson.skeletons) {
-            rootJointStr = nodeJson.skeletons[0];
-            skinStr = nodeJson.skin;
+            var rootJointStr = null;
+            var skinStr = null;
+            if (nodeJson.skeletons) {
+              rootJointStr = nodeJson.skeletons[0];
+              skinStr = nodeJson.skin;
+            }
+            var mesh = this._loadMesh(glBoostContext, meshJson, arrayBuffer, basePath, json, canvas, scale, defaultShader, rootJointStr, skinStr);
+            mesh.userFlavorName = meshStr;
+            group.addChild(mesh);
           }
-          var mesh = this._loadMesh(glBoostContext, meshJson, arrayBuffer, basePath, json, canvas, scale, defaultShader, rootJointStr, skinStr);
-          mesh.userFlavorName = meshStr;
-          group.addChild(mesh);
         } else if (nodeJson.jointName) {
           var joint = glBoostContext.createJoint();
           joint.userFlavorName = nodeJson.jointName;
@@ -8500,7 +9556,8 @@
           mesh = glBoostContext.createSkeletalMesh(geometry, null, rootJointStr);
           var skin = json.skins[skinStr];
 
-          mesh.multiplyMatrix(new Matrix44(skin.bindShapeMatrix, true));
+          mesh.bindShapeMatrix = new Matrix44(skin.bindShapeMatrix, true);
+          mesh.jointNames = skin.jointNames;
 
           var inverseBindMatricesAccessorStr = skin.inverseBindMatrices;
           mesh.inverseBindMatrices = this._accessBinary(inverseBindMatricesAccessorStr, json, arrayBuffer, 1.0, gl);
@@ -8508,89 +9565,145 @@
           geometry = glBoostContext.createGeometry(canvas);
           mesh = glBoostContext.createMesh(geometry);
         }
-        var material = glBoostContext.createClassicMaterial(canvas);
 
-        var primitiveJson = meshJson.primitives[0];
-
-        // Geometry
-        var indicesAccessorStr = primitiveJson.indices;
-        var indices = this._accessBinary(indicesAccessorStr, json, arrayBuffer, 1.0, gl);
-
-        var positionsAccessorStr = primitiveJson.attributes.POSITION;
-        var positions = this._accessBinary(positionsAccessorStr, json, arrayBuffer, scale, gl);
-
-        var normalsAccessorStr = primitiveJson.attributes.NORMAL;
-        var normals = this._accessBinary(normalsAccessorStr, json, arrayBuffer, 1.0, gl);
-
-        var additional = {};
-
-        /// if Skeletal
-        var jointAccessorStr = primitiveJson.attributes.JOINT;
-        if (jointAccessorStr) {
-          var joints = this._accessBinary(jointAccessorStr, json, arrayBuffer, 1.0, gl);
-          additional['joint'] = joints;
-        }
-        var weightAccessorStr = primitiveJson.attributes.WEIGHT;
-        if (weightAccessorStr) {
-          var weights = this._accessBinary(weightAccessorStr, json, arrayBuffer, 1.0, gl);
-          additional['weight'] = weights;
-        }
-
-        // Texture
-        var texcoords0AccessorStr = primitiveJson.attributes.TEXCOORD_0;
-        var texcoords = null;
-
-        var materialStr = primitiveJson.material;
-        var materialJson = json.materials[materialStr];
-        var diffuseValue = materialJson.values.diffuse;
-        // Diffuse Texture
-        if (texcoords0AccessorStr) {
-          texcoords = this._accessBinary(texcoords0AccessorStr, json, arrayBuffer, 1.0, gl);
-          additional['texcoord'] = texcoords;
-
-          if (typeof diffuseValue === 'string') {
-            var textureStr = diffuseValue;
-            var textureJson = json.textures[textureStr];
-            var imageStr = textureJson.source;
-            var imageJson = json.images[imageStr];
-            var imageFileStr = imageJson.uri;
-
-            var texture = glBoostContext.createTexture(basePath + imageFileStr);
-            texture.name = textureStr;
-            material.diffuseTexture = texture;
-          }
-        }
-        // Diffuse
-        if (diffuseValue && typeof diffuseValue !== 'string') {
-          material.diffuseColor = new Vector4(diffuseValue[0], diffuseValue[1], diffuseValue[2], diffuseValue[3]);
-        }
-        // Ambient
-        var ambientValue = materialJson.values.ambient;
-        if (ambientValue && typeof ambientValue !== 'string') {
-          material.ambientColor = new Vector4(ambientValue[0], ambientValue[1], ambientValue[2], ambientValue[3]);
-        }
-        // Specular
-        var specularValue = materialJson.values.specular;
-        if (specularValue && typeof specularValue !== 'string') {
-          material.specularColor = new Vector4(specularValue[0], specularValue[1], specularValue[2], specularValue[3]);
-        }
-
-        var opacityValue = 1.0 - materialJson.values.transparency;
-
-        var vertexData = {
-          position: positions,
-          normal: normals
+        var _indicesArray = [];
+        var _positions = [];
+        var _normals = [];
+        var additional = {
+          'joint': [],
+          'weight': [],
+          'texcoord': []
         };
 
-        geometry.setVerticesData(ArrayUtil.merge(vertexData, additional), [indices]);
+        var materials = [];
 
-        material.setVertexN(geometry, indices.length);
-        if (defaultShader) {
-          material.shaderClass = defaultShader;
-        } else {
-          material.shaderClass = PhongShader;
+        for (var i = 0; i < meshJson.primitives.length; i++) {
+          var primitiveJson = meshJson.primitives[i];
+
+          // Geometry
+          var indices = null;
+          if (typeof primitiveJson.indices !== 'undefined') {
+            var indicesAccessorStr = primitiveJson.indices;
+            indices = this._accessBinary(indicesAccessorStr, json, arrayBuffer, 1.0, gl);
+            _indicesArray.push(indices);
+          }
+
+          var positionsAccessorStr = primitiveJson.attributes.POSITION;
+          var positions = this._accessBinary(positionsAccessorStr, json, arrayBuffer, scale, gl);
+          Array.prototype.push.apply(_positions, positions);
+
+          var normalsAccessorStr = primitiveJson.attributes.NORMAL;
+          var normals = this._accessBinary(normalsAccessorStr, json, arrayBuffer, 1.0, gl);
+          Array.prototype.push.apply(_normals, normals);
+
+          /// if Skeletal
+          var jointAccessorStr = primitiveJson.attributes.JOINT;
+          if (jointAccessorStr) {
+            var joints = this._accessBinary(jointAccessorStr, json, arrayBuffer, 1.0, gl);
+            Array.prototype.push.apply(additional['joint'], joints);
+          }
+          var weightAccessorStr = primitiveJson.attributes.WEIGHT;
+          if (weightAccessorStr) {
+            var weights = this._accessBinary(weightAccessorStr, json, arrayBuffer, 1.0, gl);
+            Array.prototype.push.apply(additional['weight'], weights);
+          }
+
+          // Texture
+          var texcoords0AccessorStr = primitiveJson.attributes.TEXCOORD_0;
+          var texcoords = null;
+
+          var material = glBoostContext.createClassicMaterial(canvas);
+
+          var materialStr = primitiveJson.material;
+          var materialJson = json.materials[materialStr];
+          var diffuseValue = materialJson.values.diffuse;
+          // Diffuse Texture
+          if (texcoords0AccessorStr) {
+            texcoords = this._accessBinary(texcoords0AccessorStr, json, arrayBuffer, 1.0, gl);
+            Array.prototype.push.apply(additional['texcoord'], texcoords);
+
+            if (typeof diffuseValue === 'string') {
+              var textureStr = diffuseValue;
+              var textureJson = json.textures[textureStr];
+              var imageStr = textureJson.source;
+              var imageJson = json.images[imageStr];
+              var imageFileStr = imageJson.uri;
+
+              var textureUri = null;
+              if (imageFileStr.match(/^data:/)) {
+                textureUri = imageFileStr;
+              } else {
+                textureUri = basePath + imageFileStr;
+              }
+              var samplerStr = textureJson.sampler;
+              var samplerJson = json.samplers[samplerStr];
+
+              var texture = glBoostContext.createTexture(textureUri, {
+                'TEXTURE_MAG_FILTER': samplerJson.magFilter,
+                'TEXTURE_MIN_FILTER': samplerJson.minFilter,
+                'TEXTURE_WRAP_S': samplerJson.wrapS,
+                'TEXTURE_WRAP_T': samplerJson.wrapT
+              });
+              texture.name = textureStr;
+              material.diffuseTexture = texture;
+            }
+          } else {
+            if (additional['texcoord'].length > 0) {
+              var emptyTexcoords = [];
+              for (var k = 0; k < positions.length; k++) {
+                emptyTexcoords.push(new Vector2(0, 0));
+              }
+              Array.prototype.push.apply(additional['texcoord'], emptyTexcoords);
+            }
+          }
+
+          // Diffuse
+          if (diffuseValue && typeof diffuseValue !== 'string') {
+            material.diffuseColor = new Vector4(diffuseValue[0], diffuseValue[1], diffuseValue[2], diffuseValue[3]);
+          }
+          // Ambient
+          var ambientValue = materialJson.values.ambient;
+          if (ambientValue && typeof ambientValue !== 'string') {
+            material.ambientColor = new Vector4(ambientValue[0], ambientValue[1], ambientValue[2], ambientValue[3]);
+          }
+          // Specular
+          var specularValue = materialJson.values.specular;
+          if (specularValue && typeof specularValue !== 'string') {
+            material.specularColor = new Vector4(specularValue[0], specularValue[1], specularValue[2], specularValue[3]);
+          }
+
+          var opacityValue = 1.0 - materialJson.values.transparency;
+
+          if (indices !== null) {
+            material.setVertexN(geometry, indices.length);
+          }
+          if (defaultShader) {
+            material.shaderClass = defaultShader;
+          } else {
+            material.shaderClass = PhongShader;
+          }
+          materials.push(material);
         }
-        geometry.materials = [material];
+        if (additional['joint'].length === 0) {
+          delete additional['joint'];
+        }
+        if (additional['weight'].length === 0) {
+          delete additional['weight'];
+        }
+        if (additional['texcoord'].length === 0) {
+          delete additional['texcoord'];
+        }
+        var vertexData = {
+          position: _positions,
+          normal: _normals
+        };
+
+        if (_indicesArray.length === 0) {
+          _indicesArray = null;
+        }
+
+        geometry.setVerticesData(ArrayUtil.merge(vertexData, additional), _indicesArray);
+        geometry.materials = materials;
 
         return mesh;
       }
@@ -8618,12 +9731,13 @@
 
               var gl = GLContext.getInstance(canvas).gl;
               var animInputArray = this._accessBinary(animInputAccessorStr, json, arrayBuffer, 1.0, gl);
+              var animOutputArray = null;
               if (animOutputStr === 'translation') {
-                var animOutputArray = this._accessBinary(animOutputAccessorStr, json, arrayBuffer, scale, gl);
+                animOutputArray = this._accessBinary(animOutputAccessorStr, json, arrayBuffer, scale, gl);
               } else if (animOutputStr === 'rotation') {
-                var animOutputArray = this._accessBinary(animOutputAccessorStr, json, arrayBuffer, 1.0, gl, true);
+                animOutputArray = this._accessBinary(animOutputAccessorStr, json, arrayBuffer, 1.0, gl, true);
               } else {
-                var animOutputArray = this._accessBinary(animOutputAccessorStr, json, arrayBuffer, 1.0, gl);
+                animOutputArray = this._accessBinary(animOutputAccessorStr, json, arrayBuffer, 1.0, gl);
               }
 
               var animationAttributeName = '';
@@ -8757,7 +9871,7 @@
         canvas: null,
 
         /** 子供を 自分のCanvasRenderer で描画するか */
-        renderChildBySelf: false,
+        renderChildBySelf: true,
 
         init: function init(params) {
           this.superInit(params);
@@ -8776,8 +9890,8 @@
           // レンダラーを生成
           this.renderer = this.glBoostContext.createRenderer({ clearColor: { red: 1, green: 1, blue: 1, alpha: 1 } });
           this.scene = this.glBoostContext.createScene();
-          this.expression = this.glBoostContext.createExpressionAndRenderPaths(1);
-          this.expression.renderPaths[0].scene = this.scene;
+          this.expression = this.glBoostContext.createExpressionAndRenderPasses(1);
+          this.expression.renderPasses[0].scene = this.scene;
 
           this.on('enterframe', function () {
             if (this.scene) {
@@ -8830,6 +9944,7 @@
 
         renderObject: function renderObject(obj) {
           var layer = DisplayElement();
+          obj.flare('enterframe');
           obj.addChildTo(layer);
           this.renderer2d.renderObject(layer);
         },
@@ -8840,5 +9955,466 @@
       });
     });
   }
+
+  var LambertShaderSource = function () {
+    function LambertShaderSource() {
+      babelHelpers.classCallCheck(this, LambertShaderSource);
+    }
+
+    babelHelpers.createClass(LambertShaderSource, [{
+      key: 'FSDefine_LambertShaderSource',
+
+      /*
+      VSDefine_LambertShaderSource(in_, out_, f, lights, material, extraData) {
+        var shaderText = '';
+         let textureUnitIndex = 0;
+        for (let i=0; i<lights.length; i++) {
+          if (lights[i].camera && lights[i].camera.texture) {
+            shaderText += `${out_} vec4 projectedPosByLight[${textureUnitIndex+1}];\n`;
+            shaderText +=      `uniform mat4 viewMatrixFromLight[${textureUnitIndex+1}];\n`;
+            shaderText +=      `uniform mat4 projectionMatrixFromLight[${textureUnitIndex+1}];\n`;
+            textureUnitIndex++;
+          }
+        }
+        return shaderText;
+      }
+       VSTransform_LambertShaderSource(existCamera_f, f, lights, material, extraData) {
+        var shaderText = '';
+        let textureUnitIndex = 0;
+        for (let i=0; i<lights.length; i++) {
+          if (lights[i].camera && lights[i].camera.texture) {
+            shaderText += `mat4 pvwLightMatrix = projectionMatrixFromLight[${textureUnitIndex}] * viewMatrixFromLight[${textureUnitIndex}] * worldMatrix;\n`;
+            shaderText += `projectedPosByLight[${textureUnitIndex}] = pvwLightMatrix * vec4(aVertex_position, 1.0);\n`;
+            textureUnitIndex++;
+          }
+        }
+        return shaderText;
+      }*/
+
+      value: function FSDefine_LambertShaderSource(in_, f, lights) {
+
+        var sampler2D = this._sampler2DShadow_func();
+        var shaderText = '';
+        shaderText += 'uniform vec4 Kd;\n';
+
+        var textureUnitIndex = 0;
+        //for (let i=0; i<lights.length; i++) {
+        //  if (lights[i].camera && lights[i].camera.texture) {
+        shaderText += 'uniform mediump ' + sampler2D + ' uDepthTexture[' + lights.length + '];\n';
+
+        shaderText += in_ + ' vec4 v_shadowCoord[' + lights.length + '];\n';
+
+        textureUnitIndex++;
+        //}
+        //}
+        shaderText += 'uniform int isShadowCasting[' + lights.length + '];\n';
+        shaderText += in_ + ' vec4 temp[1];\n';
+
+        return shaderText;
+      }
+    }, {
+      key: 'FSShade_LambertShaderSource',
+      value: function FSShade_LambertShaderSource(f, gl, lights) {
+        var shaderText = '';
+
+        var textureProjFunc = Shader._textureProj_func(gl);
+
+        var textureUnitIndex = 0;
+        for (var i = 0; i < lights.length; i++) {
+          if (lights[i].camera && lights[i].camera.texture) {
+            textureUnitIndex++;
+          }
+        }
+
+        shaderText += '  float depthBias = 0.005;\n';
+
+        shaderText += '  vec4 surfaceColor = rt0;\n';
+        shaderText += '  rt0 = vec4(0.0, 0.0, 0.0, 0.0);\n';
+        shaderText += '  vec3 normal = normalize(v_normal);\n';
+        for (var i = 0; i < lights.length; i++) {
+          shaderText += '  {\n';
+          // if PointLight: lightPosition[i].w === 1.0      if DirectionalLight: lightPosition[i].w === 0.0
+          shaderText += '    vec3 light = normalize(lightPosition[' + i + '].xyz - position.xyz * lightPosition[' + i + '].w);\n';
+
+          shaderText += '    if (isShadowCasting[' + i + '] == 1) {// ' + i + '\n';
+
+          shaderText += '      float depth = ' + textureProjFunc + '(uDepthTexture[' + i + '], v_shadowCoord[' + i + ']).r;\n';
+          shaderText += '      if (depth < (v_shadowCoord[' + i + '].z - depthBias) / v_shadowCoord[' + i + '].w) {\n';
+          shaderText += '        light *= 0.5;\n';
+          shaderText += '      }\n';
+
+          //shaderText += `        float visibility = texture2DProj(uDepthTexture[${i}], v_shadowCoord[${i}], depthBias).x;\n`;
+          //shaderText += `        light *= visibility > 0.5 ? 1.0 : 0.0;\n`;
+
+          shaderText += '    }\n';
+
+          shaderText += '    float diffuse = max(dot(light, normal), 0.0);\n';
+          shaderText += '    rt0 += Kd * lightDiffuse[' + i + '] * vec4(diffuse, diffuse, diffuse, 1.0) * surfaceColor;\n';
+          shaderText += '  }\n';
+        }
+        //shaderText += '  rt0.a = 1.0;\n';
+        //shaderText += '  rt0 = vec4(v_shadowCoord[0].x, v_shadowCoord[0].y, 0.0, 1.0);\n';
+
+        return shaderText;
+      }
+    }, {
+      key: 'prepare_LambertShaderSource',
+      value: function prepare_LambertShaderSource(gl, shaderProgram, vertexAttribs, existCamera_f, lights, material, extraData, canvas) {
+
+        var vertexAttribsAsResult = [];
+
+        shaderProgram.Kd = gl.getUniformLocation(shaderProgram, 'Kd');
+
+        var textureUnitIndex = 0;
+        for (var i = 0; i < lights.length; i++) {
+          shaderProgram['isShadowCasting' + i] = gl.getUniformLocation(shaderProgram, 'isShadowCasting[' + i + ']');
+          // depthTexture
+          shaderProgram['uniformDepthTextureSampler_' + i] = gl.getUniformLocation(shaderProgram, 'uDepthTexture[' + i + ']');
+          // set texture unit i+1 to the sampler
+          gl.uniform1i(shaderProgram['uniformDepthTextureSampler_' + i], i + 1); // +1 because 0 is used for diffuse texture
+
+          if (lights[i].camera && lights[i].camera.texture) {
+            lights[i].camera.texture.textureUnitIndex = i + 1; // +1 because 0 is used for diffuse texture
+          }
+        }
+
+        return vertexAttribsAsResult;
+      }
+    }]);
+    return LambertShaderSource;
+  }();
+
+  var LambertShader = function (_DecalShader) {
+    babelHelpers.inherits(LambertShader, _DecalShader);
+
+    function LambertShader(glBoostContext, basicShader) {
+      babelHelpers.classCallCheck(this, LambertShader);
+
+      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(LambertShader).call(this, glBoostContext, basicShader));
+
+      LambertShader.mixin(LambertShaderSource);
+      return _this;
+    }
+
+    babelHelpers.createClass(LambertShader, [{
+      key: 'setUniforms',
+      value: function setUniforms(gl, glslProgram, material, camera, mesh, lights) {
+        babelHelpers.get(Object.getPrototypeOf(LambertShader.prototype), 'setUniforms', this).call(this, gl, glslProgram, material);
+
+        var Kd = material.diffuseColor;
+        gl.uniform4f(glslProgram.Kd, Kd.x, Kd.y, Kd.z, Kd.w);
+
+        for (var j = 0; j < lights.length; j++) {
+          if (lights[j].camera && lights[j].camera.texture) {
+            var cameraMatrix = lights[j].camera.lookAtRHMatrix();
+            var projectionMatrix = lights[j].camera.projectionRHMatrix();
+            gl.uniformMatrix4fv(glslProgram['depthPVMatrix_' + j], false, Matrix44.multiply(projectionMatrix, cameraMatrix).flatten());
+          }
+        }
+
+        for (var i = 0; i < lights.length; i++) {
+          if (lights[i].camera && lights[i].camera.texture) {
+            gl.uniform1i(glslProgram['isShadowCasting' + i], 1);
+          } else {
+            gl.uniform1i(glslProgram['isShadowCasting' + i], 0);
+          }
+        }
+      }
+    }]);
+    return LambertShader;
+  }(DecalShader);
+
+  GLBoost['LambertShader'] = LambertShader;
+
+  var HalfLambertShaderSource = function () {
+    function HalfLambertShaderSource() {
+      babelHelpers.classCallCheck(this, HalfLambertShaderSource);
+    }
+
+    babelHelpers.createClass(HalfLambertShaderSource, [{
+      key: 'FSDefine_HalfLambertShaderSource',
+      value: function FSDefine_HalfLambertShaderSource(in_, f, lights) {
+        var shaderText = '';
+        shaderText += 'uniform vec4 Kd;\n';
+
+        return shaderText;
+      }
+    }, {
+      key: 'FSShade_HalfLambertShaderSource',
+      value: function FSShade_HalfLambertShaderSource(f, gl, lights) {
+        var shaderText = '';
+
+        shaderText += '  vec4 surfaceColor = rt0;\n';
+        shaderText += '  rt0 = vec4(0.0, 0.0, 0.0, 0.0);\n';
+        shaderText += '  vec3 normal = normalize(v_normal);\n';
+
+        shaderText += '  for (int i=0; i<' + lights.length + '; i++) {\n';
+        // if PointLight: lightPosition[i].w === 1.0      if DirectionalLight: lightPosition[i].w === 0.0
+        shaderText += '    vec3 light = normalize(lightPosition[i].xyz - position.xyz * lightPosition[i].w);\n';
+        shaderText += '    float halfLambert = max(dot(light, normal), 0.0)*0.5+0.5;\n';
+        shaderText += '    float diffuse = halfLambert*halfLambert;\n';
+        shaderText += '    rt0 += Kd * lightDiffuse[i] * vec4(diffuse, diffuse, diffuse, 1.0) * surfaceColor;\n';
+        shaderText += '  }\n';
+        //    shaderText += '  rt0 *= (1.0 - shadowRatio);\n';
+        //shaderText += '  rt0.a = 1.0;\n';
+        //shaderText += '  rt0 = vec4(position.xyz, 1.0);\n';
+
+        return shaderText;
+      }
+    }, {
+      key: 'prepare_HalfLambertShaderSource',
+      value: function prepare_HalfLambertShaderSource(gl, shaderProgram, vertexAttribs, existCamera_f, lights, material, extraData, canvas) {
+
+        var vertexAttribsAsResult = [];
+
+        shaderProgram.Kd = gl.getUniformLocation(shaderProgram, 'Kd');
+
+        return vertexAttribsAsResult;
+      }
+    }]);
+    return HalfLambertShaderSource;
+  }();
+
+  var HalfLambertShader = function (_DecalShader) {
+    babelHelpers.inherits(HalfLambertShader, _DecalShader);
+
+    function HalfLambertShader(glBoostContext, basicShader) {
+      babelHelpers.classCallCheck(this, HalfLambertShader);
+
+      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(HalfLambertShader).call(this, glBoostContext, basicShader));
+
+      HalfLambertShader.mixin(HalfLambertShaderSource);
+      return _this;
+    }
+
+    babelHelpers.createClass(HalfLambertShader, [{
+      key: 'setUniforms',
+      value: function setUniforms(gl, glslProgram, material) {
+        babelHelpers.get(Object.getPrototypeOf(HalfLambertShader.prototype), 'setUniforms', this).call(this, gl, glslProgram, material);
+
+        var Kd = material.diffuseColor;
+        gl.uniform4f(glslProgram.Kd, Kd.x, Kd.y, Kd.z, Kd.w);
+      }
+    }]);
+    return HalfLambertShader;
+  }(DecalShader);
+
+  GLBoost['HalfLambertShader'] = HalfLambertShader;
+
+  var HalfLambertAndWrapLightingShaderSource = function () {
+    function HalfLambertAndWrapLightingShaderSource() {
+      babelHelpers.classCallCheck(this, HalfLambertAndWrapLightingShaderSource);
+    }
+
+    babelHelpers.createClass(HalfLambertAndWrapLightingShaderSource, [{
+      key: 'FSDefine_HalfLambertAndWrapLightingShaderSource',
+      value: function FSDefine_HalfLambertAndWrapLightingShaderSource(in_, f, lights) {
+        var shaderText = '';
+        shaderText += 'uniform vec4 Kd;\n';
+        shaderText += 'uniform vec3 wrap;\n';
+
+        return shaderText;
+      }
+    }, {
+      key: 'FSShade_HalfLambertAndWrapLightingShaderSource',
+      value: function FSShade_HalfLambertAndWrapLightingShaderSource(f, gl, lights) {
+        var shaderText = '';
+
+        shaderText += '  vec4 surfaceColor = rt0;\n';
+        shaderText += '  rt0 = vec4(0.0, 0.0, 0.0, 0.0);\n';
+        shaderText += '  vec3 normal = normalize(v_normal);\n';
+
+        shaderText += '  for (int i=0; i<' + lights.length + '; i++) {\n';
+        // if PointLight: lightPosition[i].w === 1.0      if DirectionalLight: lightPosition[i].w === 0.0
+        shaderText += '    vec3 light = normalize(lightPosition[i].xyz - position.xyz * lightPosition[i].w);\n';
+        shaderText += '    float halfLambert = max(dot(light, normal), 0.0)*0.5+0.5;\n';
+        shaderText += '    float diffuse = halfLambert*halfLambert;\n';
+        shaderText += '    vec3 diffuseVec = vec3(diffuse, diffuse, diffuse);\n';
+        shaderText += '    diffuseVec = (diffuseVec+wrap) / (1.0 + wrap);\n';
+        shaderText += '    rt0 += Kd * lightDiffuse[i] * vec4(diffuseVec, 1.0) * surfaceColor;\n';
+        shaderText += '  }\n';
+
+        return shaderText;
+      }
+    }, {
+      key: 'prepare_HalfLambertAndWrapLightingShaderSource',
+      value: function prepare_HalfLambertAndWrapLightingShaderSource(gl, shaderProgram, vertexAttribs, existCamera_f, lights, material, extraData, canvas) {
+
+        var vertexAttribsAsResult = [];
+
+        shaderProgram.Kd = gl.getUniformLocation(shaderProgram, 'Kd');
+        shaderProgram.wrap = gl.getUniformLocation(shaderProgram, 'wrap');
+
+        return vertexAttribsAsResult;
+      }
+    }]);
+    return HalfLambertAndWrapLightingShaderSource;
+  }();
+
+  var HalfLambertAndWrapLightingShader = function (_DecalShader) {
+    babelHelpers.inherits(HalfLambertAndWrapLightingShader, _DecalShader);
+
+    function HalfLambertAndWrapLightingShader(glBoostContext, basicShader) {
+      babelHelpers.classCallCheck(this, HalfLambertAndWrapLightingShader);
+
+      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(HalfLambertAndWrapLightingShader).call(this, glBoostContext, basicShader));
+
+      HalfLambertAndWrapLightingShader.mixin(HalfLambertAndWrapLightingShaderSource);
+
+      _this._wrap = new Vector3(0.2, 0.1, 0.0);
+      return _this;
+    }
+
+    babelHelpers.createClass(HalfLambertAndWrapLightingShader, [{
+      key: 'setUniforms',
+      value: function setUniforms(gl, glslProgram, material) {
+        babelHelpers.get(Object.getPrototypeOf(HalfLambertAndWrapLightingShader.prototype), 'setUniforms', this).call(this, gl, glslProgram, material);
+
+        var Kd = material.diffuseColor;
+        gl.uniform4f(glslProgram.Kd, Kd.x, Kd.y, Kd.z, Kd.w);
+        gl.uniform3f(glslProgram.wrap, this._wrap.x, this._wrap.y, this._wrap.z);
+      }
+    }, {
+      key: 'wrap',
+      set: function set(value) {
+        this._wrap = value;
+      },
+      get: function get() {
+        return this._wrap;
+      }
+    }]);
+    return HalfLambertAndWrapLightingShader;
+  }(DecalShader);
+
+  GLBoost['HalfLambertAndWrapLightingShader'] = HalfLambertAndWrapLightingShader;
+
+  var DepthDisplayShaderSource = function () {
+    function DepthDisplayShaderSource() {
+      babelHelpers.classCallCheck(this, DepthDisplayShaderSource);
+    }
+
+    babelHelpers.createClass(DepthDisplayShaderSource, [{
+      key: 'FSShade_DepthDisplayShaderSource',
+      value: function FSShade_DepthDisplayShaderSource(f, gl, lights) {
+        var shaderText = '';
+
+        shaderText += '  vec4 surfaceColor = rt0;\n';
+        shaderText += '  rt0 = vec4(surfaceColor.r, surfaceColor.r, surfaceColor.r, 1.0);\n';
+
+        //shaderText += '  rt0.a = 1.0;\n';
+        //shaderText += '  rt0 = vec4(position.xyz, 1.0);\n';
+
+        return shaderText;
+      }
+    }]);
+    return DepthDisplayShaderSource;
+  }();
+
+  var DepthDisplayShader = function (_DecalShader) {
+    babelHelpers.inherits(DepthDisplayShader, _DecalShader);
+
+    function DepthDisplayShader(glBoostContext, basicShader) {
+      babelHelpers.classCallCheck(this, DepthDisplayShader);
+
+      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(DepthDisplayShader).call(this, glBoostContext, basicShader));
+
+      DepthDisplayShader.mixin(DepthDisplayShaderSource);
+      return _this;
+    }
+
+    return DepthDisplayShader;
+  }(DecalShader);
+
+  GLBoost['DepthDisplayShader'] = DepthDisplayShader;
+
+  var PassThroughShaderSource = function () {
+    function PassThroughShaderSource() {
+      babelHelpers.classCallCheck(this, PassThroughShaderSource);
+    }
+
+    babelHelpers.createClass(PassThroughShaderSource, [{
+      key: 'VSDefine_PassThroughShaderSource',
+      value: function VSDefine_PassThroughShaderSource(in_, out_, f) {
+        var shaderText = '';
+        if (Shader._exist(f, GLBoost.COLOR)) {
+          shaderText += in_ + ' vec4 aVertex_color;\n';
+          shaderText += out_ + ' vec4 color;\n';
+        }
+        if (Shader._exist(f, GLBoost.TEXCOORD)) {
+          shaderText += in_ + ' vec2 aVertex_texcoord;\n';
+          shaderText += out_ + ' vec2 texcoord;\n';
+        }
+        return shaderText;
+      }
+    }, {
+      key: 'VSTransform_PassThroughShaderSource',
+      value: function VSTransform_PassThroughShaderSource(existCamera_f, f) {
+        var shaderText = '';
+        if (Shader._exist(f, GLBoost.COLOR)) {
+          shaderText += '  color = aVertex_color;\n';
+        }
+        if (Shader._exist(f, GLBoost.TEXCOORD)) {
+          shaderText += '  texcoord = aVertex_texcoord;\n';
+        }
+        return shaderText;
+      }
+    }, {
+      key: 'FSDefine_PassThroughShaderSource',
+      value: function FSDefine_PassThroughShaderSource(in_, f) {
+        var shaderText = '';
+        if (Shader._exist(f, GLBoost.COLOR)) {
+          shaderText += in_ + ' vec4 color;\n';
+        }
+        if (Shader._exist(f, GLBoost.TEXCOORD)) {
+          shaderText += in_ + ' vec2 texcoord;\n\n';
+        }
+
+        return shaderText;
+      }
+    }, {
+      key: 'FSShade_PassThroughShaderSource',
+      value: function FSShade_PassThroughShaderSource(f, gl) {
+
+        var shaderText = '    rt0 = vec4(1.0, 0.0, 0.0, 1.0);\n';
+        return shaderText;
+      }
+    }, {
+      key: 'prepare_DecalShaderSource',
+      value: function prepare_DecalShaderSource(gl, shaderProgram, vertexAttribs, existCamera_f) {
+
+        var vertexAttribsAsResult = [];
+        /*
+        vertexAttribs.forEach((attribName)=>{
+          if (attribName === GLBoost.COLOR || attribName === GLBoost.TEXCOORD) {
+            shaderProgram['vertexAttribute_' + attribName] = gl.getAttribLocation(shaderProgram, 'aVertex_' + attribName);
+            gl.enableVertexAttribArray(shaderProgram['vertexAttribute_' + attribName]);
+            vertexAttribsAsResult.push(attribName);
+          }
+        });
+        */
+        return vertexAttribsAsResult;
+      }
+    }]);
+    return PassThroughShaderSource;
+  }();
+
+  var PassThroughShader = function (_Shader) {
+    babelHelpers.inherits(PassThroughShader, _Shader);
+
+    function PassThroughShader(glBoostContext) {
+      var basicShader = arguments.length <= 1 || arguments[1] === undefined ? VertexWorldShaderSource : arguments[1];
+      babelHelpers.classCallCheck(this, PassThroughShader);
+
+      var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(PassThroughShader).call(this, glBoostContext));
+
+      PassThroughShader.mixin(basicShader);
+      PassThroughShader.mixin(PassThroughShaderSource);
+      return _this;
+    }
+
+    return PassThroughShader;
+  }(Shader);
+
+  GLBoost['PassThroughShader'] = PassThroughShader;
 
 }));
