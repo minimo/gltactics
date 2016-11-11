@@ -138,7 +138,7 @@ phina.define("tac.MainScene", {
         var cubeGeometry = glBoostContext.createCube(new GLBoost.Vector3(1,1,1), new GLBoost.Vector4(1,1,1,1));
         var cube = glBoostContext.createMesh(cubeGeometry, material2);
         cube.translate = new GLBoost.Vector3(0, 3, 0);
-//        layer.scene.add(cube);
+        layer.scene.addChild(cube);
         this.cube = cube;
 
         //キャラクタメッシュ
