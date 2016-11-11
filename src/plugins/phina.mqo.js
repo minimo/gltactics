@@ -173,12 +173,14 @@ phina.namespace(function() {
 
             //使用マテリアルに応じてオブジェクトを分割変換
             this.build = null;
-            if (typeof THREE !== undefined) {
+             this.build = this.buildGLBoost;
+/*
+            if (THREE) {
                 this.build = this.buildTHREE;
-            } else if (typeof GLBoost !== undefined) {
+            } else if (GLBoost) {
                 this.build = this.buildGLBoost;
             }
-
+*/
             var meshList = []
             for (var mn = 0; mn < facemat.length; mn++) {
                 var matnum = facemat[mn];
