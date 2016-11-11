@@ -119,6 +119,7 @@ phina.define("tac.MainScene", {
         }).addChildTo(this);
         var glBoostContext = layer.glBoostContext;
 
+        //基準座標表示用
         var material = glBoostContext.createClassicMaterial(layer.canvas);
         var texture = glBoostContext.createTexture('assets/texture.png');
         material.diffuseTexture = texture;
@@ -128,6 +129,8 @@ phina.define("tac.MainScene", {
         plane.translate = new GLBoost.Vector3(0, 0, 0);
         layer.scene.addChild(plane);
 
+
+        //箱
         var material2 = glBoostContext.createClassicMaterial(layer.canvas);
         var texture2 = glBoostContext.createTexture('assets/logo.png');
         material2.diffuseTexture = texture2;
@@ -138,12 +141,14 @@ phina.define("tac.MainScene", {
 //        layer.scene.add(cube);
         this.cube = cube;
 
+        //キャラクタメッシュ
         var mqo = phina.asset.AssetManager.get("mqo", "gradriel");
         var meshes = mqo.buildMeshGLBoost(glBoostContext);
         var m = meshes[0];
         m.translate = new GLBoost.Vector3(0, 0, 0);
         layer.scene.addChild(m);
 
+        //地形メッシュ
         var mqo = phina.asset.AssetManager.get("mqo", "ground");
         var meshes = mqo.buildMeshGLBoost(glBoostContext);
         var m = meshes[0];
@@ -151,18 +156,18 @@ phina.define("tac.MainScene", {
         m.scale = new GLBoost.Vector3(10.0, 1.0, 10.0);
         layer.scene.addChild(m);
 
+        //ボクセルメッシュ
         var parser = new vox.Parser();
         var p = parser.parse("assets/chr_fox.vox");
         var a = p.then(function(voxelData) {
             var d = voxelData;
-/*
             var builder = new vox.GLBoostMeshBuilder(voxelData);
             var mesh = builder.createMesh();
             layer.scene.addChild(mesh);
-*/
         });
 
-        this.camera = glBoostContext.createCamera({
+        //カメラ
+        this.camera = glBoostContext.createPerspectiveCamera({
             eye: new GLBoost.Vector3(0.0, 15, 40.0),
             center: new GLBoost.Vector3(0.0, 5.0, 0.0),
             up: new GLBoost.Vector3(0.0, 1.0, 0.0)
@@ -174,6 +179,7 @@ phina.define("tac.MainScene", {
         });
         layer.scene.addChild(this.camera);
 
+        //シーン準備完了通知
         layer.expression.prepareToRender();
         return layer;
     },
